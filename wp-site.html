@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <title>Sergio Fidalgo</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+
+    h1 {
+      font-size: 4.5vh;
+      line-height: 120%;
+margin: 4vh 0vh 2vh 0vh;
+    }
+
+    p {
+      font-size: 2.2vh;
+      line-height: 150%;
+      margin: 0px 0px 1.8vh 0px;
+    }
+    
+    hr{
+        display: none;    
+    }
+    
+    
+    aside#sidebar {
+    display: none;
+}
+
+header.header {
+    display: none;
+}
+
+div#branding {
+    display: none;
+}
+
+nav#menu {
+    display: none;
+}
+
+
+    #clock {
+      font-size: 1.4vh;
+    }
+
+    /* Mobile font styles */
+    @media (max-width: 560px) {
+      h1 {
+        font-size: 32px;
+        line-height: 120%;
+      }
+
+      p {
+        font-size: 22px;
+        line-height: 150%;
+        margin-block-start: -0.15em;
+      }
+
+      #clock {
+        font-size: 14px;
+      }
+    }
+
+
+
+    #aiDisclaimer {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      color: black;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      max-width: 320px;
+      z-index: 5000;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.4s ease-out forwards;
+    }
+
+    #aiDisclaimer p {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      line-height: 1.4;
+      font-family: helvetica, arial;
+    }
+
+    #aiDisclaimer button {
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #aiDisclaimer button:hover {
+      background: #222;
+    }
+
+    /* Mobile centered */
+    @media (max-width: 560px) {
+      #aiDisclaimer {
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        max-width: 90vw;
+      }
+    }
+
+    /* Animation keyframes */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+
+    #aiDisclaimer button:hover {
+      background: #222;
+    }
+
+    /* Centered for mobile */
+    @media (max-width: 560px) {
+      #aiDisclaimer {
+        border-radius: 0;
+        left: 0;
+        transform: translateX(-50%);
+        max-width: 100%;
+        position: fixed;
+        bottom: 0;
+      }
+    }
+
+
+    #aboutContent p,
+    #workContent p {
+      opacity: 0.2;
+      transition: opacity 0.8s ease;
+    }
+
+    #aboutContent p.visible,
+    #workContent p.visible {
+      opacity: 1;
+    }
+
+    .sticky-label {
+      position: sticky;
+      top: 60px;
+      align-self: flex-start;
+      padding: 5px;
+      font-size: 1.6vh;
+      width: 30%;
+    }
+
+
+    /* Underline‑wipe animation */
+    a.preview-link {
+      position: relative;
+      color: currentColor;
+      text-decoration: none;
+      z-index: 2000;
+
+    }
+
+    a.preview-link::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: -2px;
+      height: 2px;
+      width: 100%;
+      background: currentColor;
+      transition: width 0.5s ease;
+    }
+
+    a.preview-link:hover::after {
+      width: 0;
+    }
+
+    a.preview-link,
+    #aboutContent p {
+      transition: opacity 0.4s ease;
+    }
+
+    .preview-link.active-blend {
+      mix-blend-mode: difference;
+      opacity: 1;
+      z-index: 3000;
+    }
+
+
+    /* Preview container behaves like a tooltip */
+    #hoverPreview {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 2500;
+      pointer-events: none;
+    }
+
+    #hoverPreview img,
+    #hoverPreview video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: auto;
+      height: auto;
+      max-width: 70vw;
+      max-height: 70vh;
+      object-fit: contain;
+      z-index: 1999;
+      border-radius: 16px;
+      transition: none !important;
+    }
+    
+    #mediaOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2500;
+  display: none;
+  pointer-events: none;
+}
+
+#mediaBackdrop {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* 50% black */
+  z-index: 2499;
+  pointer-events: auto;
+}
+
+
+
+
+    /* HAND IMAGE */
+    #handImage {
+      position: absolute;
+      z-index: 10;
+      pointer-events: none;
+      max-width: none;
+    }
+
+    /* COMMON CONTENT */
+    .screenContent {
+      position: absolute;
+      background: #f5f5f5;
+      color: #000;
+      overflow-y: auto;
+      box-sizing: border-box;
+      font-family: Helvetica, Arial, sans-serif;
+      padding: 5.5vh 3vh 3vh 3vh;
+      border-radius: 2.5vh;
+    }
+
+    @media (max-width: 560px) {
+      .screenContent {
+        border-radius: 0px;
+padding: 40px 3vh;
+      }
+    }
+
+    @media (max-height: 450px) {
+      .screenContent {
+        border-radius: 20px;
+padding: 2vw 3vh;
+      }
+    }
+
+    #homeContent {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Allow 3D transforms */
+    #homeContent,
+    #handImage {
+      transition: transform 0.1s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+
+
+    #aboutContent {
+      display: none;
+      background: #222;
+      color: white;
+    }
+
+
+    #workContent {
+      display: none;
+      background: #222;
+      color: white;
+    }
+
+    /* HEADER */
+    .headerTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .headerTop-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      mix-blend-mode: difference;
+      gap: 8px;
+      z-index: 999;
+    }
+
+
+    .headerTop button {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 1.4vh;
+      cursor: pointer;
+    }
+
+    /* BUTTONS */
+    .comic-button {
+      width: 100%;
+      padding: 10px 10px;
+      font-size: 1.85vh;
+      text-align: center;
+      text-decoration: none;
+      color: #000000;
+      background-color: #ffffff;
+      border: 2px solid #000;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    @media (max-width: 560px) {
+      .comic-button {
+        font-size: 22px;
+      }
+
+    }
+
+    .comic-button:hover {
+      background-color: #dadada;
+      color: #000000;
+      border: 2px solid #000000;
+      box-shadow: 5px 5px 0px #000;
+      transform: translateY(-4px);
+
+    }
+
+    .comic-button:active {
+      background-color: #fff;
+      color: #ff5252;
+      border: 2px solid #ff5252;
+      box-shadow: 5px 5px 0px #ff5252;
+      transform: translateY(-4px);
+
+    }
+
+    #refreshButton {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      background: #fff;
+      border: none;
+      height: 40px;
+      font-size: 16px;
+      color: rgb(0, 0, 0);
+      cursor: pointer;
+      box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      text-align: center;
+      padding: 0px 16px;
+      border-radius: 8px;
+    }
+
+    .scroll-label {
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+      gap: 14px;
+      align-content: center;
+      justify-content: flex-end;
+      height: 15px;
+    }
+
+    .scroll-label .line {
+      height: 1em;
+      line-height: 1em;
+      display: block;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #refreshButton:hover .scroll-label {
+      transform: translateY(1.8em);
+    }
+
+
+    /* Hide on mobile */
+    @media (max-width: 560px) {
+      #refreshButton {
+        display: none;
+      }
+    }
+
+
+    /* Hide on mobile */
+    @media (max-width: 560px) {
+      #refreshButton {
+        display: none;
+      }
+    }
+
+
+
+    /* FOOTER */
+    .footer {
+      margin-top: 3vh;
+      opacity: 1 !important;
+z-index: 9999;
+    position: relative;
+    }
+
+    .footer p {
+      font-size: 1.4vh;
+      opacity: 1 !important;
+    }
+
+    @media (max-width: 560px) {
+      .footer p {
+        font-size: 14px;
+      }
+    }
+
+
+    .footer a {
+      color: inherit;
+      text-decoration: none;
+      opacity: 1 !important;
+font-size: 1.4vh;
+    }
+
+
+@media (max-width: 560px) {
+      .footer a {
+        font-size: 14px;
+      }
+    }
+
+    .emailLink {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .socialIcons {
+      vertical-align: middle;
+      cursor: pointer;
+      display: flex;
+      gap: 20px;
+    }
+
+    /* MOBILE HIDE HAND */
+    @media (max-width: 560px) {
+      #handImage {
+        display: none;
+      }
+    }
+
+    .buttonRow {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .buttonRow {
+        flex-direction: column;
+      }
+    }
+
+@media (max-height: 850px) {
+      .buttonRow {
+        flex-direction: column;
+      }
+    }
+
+    /* Hide scrollbars across browsers */
+    .screenContent {
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* Internet Explorer 10+ */
+    }
+
+    .screenContent::-webkit-scrollbar {
+      display: none;
+      /* Safari and Chrome */
+    }
+
+    /* Tooltip for Type 2 Links */
+    #tooltipCard {
+      position: absolute;
+      background: white;
+      color: #333;
+      border-radius: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 12px 16px;
+      font-family: Helvetica, Arial, sans-serif;
+      line-height: 115%;
+      z-index: 2500;
+      width: auto;
+      min-width: 240px;
+      max-width: 380px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Content inside tooltip */
+    .tooltip-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tooltip-content img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+
+    .tooltip-content .text-block {
+      flex-grow: 1;
+    }
+
+    .tooltip-content .text-block strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .tooltip-content .text-block span {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .tooltip-time {
+      font-size: 12px;
+      color: #aaa;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- DISCLAIMER -->
+  <div id="aiDisclaimer">
+    <p style="font-weight: bold;">Important notice</p>
+    <p>
+      This microsite was developed using generative artificial intelligence.
+    </p>
+    <button onclick="closeDisclaimer()">Good to know</button>
+  </div>
+
+
+  <canvas id="myCanvas"></canvas>
+
+  <img id="handImage" alt="Hand" />
+
+  <!-- HOME SCREEN -->
+  <div id="homeContent" class="screenContent">
+    <div>
+      <div class="headerTop">
+        <a href=""><img src="../src/smfidalgo_logo.svg" style="height:4.5vh;min-height:24px"></a>
+        <div style="display:flex; align-items:center;">
+          <div id="clockDot" style="width:6px; height:6px; background:#000; border-radius:50%; margin-right:6px;"></div>
+          <div id="clock"></div>
+        </div>
+      </div>
+
+      <h1 style="margin-top:30px;">Hey user,</h1>
+      <p>You are likely accessing this address with two main questions:</p>
+
+      <div class="buttonRow">
+        <button class="comic-button" onclick="openAbout()">Who is Sergio</button>
+        <button class="comic-button" onclick="openWork()">What do I do</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>If you are here for different reasons than learning more about me, write to
+        <a href="mailto:serfidalgo@outlook.com" target="_blank" class="preview-link type-2 no-preview"
+          style="opacity: 1" data-tooltip-title="Sergio's Email" data-tooltip-text="Drop me a line and let's talk"
+          data-tooltip-time="" data-tooltip-img="email.png">
+          serfidalgo@outlook.com
+        </a>
+      <p style="margin-top:1.8vh;">If you are still not satisfied, find me on these channels</br>
+      <div class="socialIcons">
+        <a href="https://www.linkedin.com/in/smfidalgo/" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's LinkedIn" data-tooltip-text="A traditional view of my professional life"
+          data-tooltip-time="" data-tooltip-img="sergio.png">
+          LinkedIn
+        </a>
+        <a href="https://www.dribbble/smfidalgo" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's Dribbble" data-tooltip-text="Some pieces of visual work here"
+          data-tooltip-time="" data-tooltip-img="logo-smf.png">
+          Dribbble
+        </a>
+        <a href="https://www.vimeo.com/smfidalgo" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's Vimeo" data-tooltip-text="I also had fun using DSLR cameras!"
+          data-tooltip-time="" data-tooltip-img="vimeo.png">
+          Vimeo
+        </a>
+      </div>
+      </p>
+    </div>
+  </div>
+
+
+
+  <!-- ABOUT SCREEN -->
+  <div id="aboutContent" class="screenContent">
+    <div class="headerTop-inner">
+      <img src="../src/smfidalgo_logo_white.svg" onclick="backToHome()" style="height:4.5vh;min-height:24px;cursor: pointer;">
+      <a class="" href="#" onclick="backToHome()" style="color:white; font-size: 1.8vh;text-decoration: none;">Back</a>
+    </div>
+
+    <h1 style="margin-top:70px;">A bit of myself</h1>
+
+
+    <!-- Life Section -->
+    <div style="display:flex; gap:0px; margin-top:30px;">
+      <div class="sticky-label">Life</div>
+      <div style="width:70%; line-height:1.5;">
+        <p>I was born in Oviedo, Asturias, some people may call this place a natural paradise in <a
+            href="https://en.wikipedia.org/wiki/Asturias" target="_blank" class="preview-link"
+            data-sources="asturias-1.jpg, asturias-4.jpg, asturias-6.jpg, asturias-2.jpg, asturias-3.jpg, asturias-5.jpg, asturias-7.jpg, asturias-8.jpg">
+            Spain ↗</a>
+        </p>
+        <p>Ever since I was a kid I played musical instruments, thrived in orchestras and taught music.
+        </p>
+        <p>As I grew up I studied art and then took a specialization in <a href="https://dribbble.com/smfidalgo"
+            target="_blank" class="preview-link"
+            data-sources="design-1.jpg,design-2.jpg, design-3.jpg, design-4.jpg, design-5.jpg, design-7.jpg, design-9.jpg, design-10.jpg,design-14.jpg, design-12.jpg, design-13.jpg">
+            advertising ↗</a></p>
+        <p>Other than music and art I love everything related to food, or getting lost in new places. I often take time
+          to enjoy the simple things that make life feel <a href="https://en.wikipedia.org/wiki/Asturias" target="_blank"
+            class="preview-link"
+            data-sources="me-3.jpg, me-4.jpg, me-5.jpg, me-7.jpg, me-0.jpg, me-8.jpg, me-9.jpg, me-10.jpg, me-11.jpg, me-12.png">
+            full ↗</a></p>
+      </div>
+    </div>
+
+    <!-- Work Section -->
+    <div style="display:flex; gap:0px; margin-top:30px;">
+      <div class="sticky-label">Work</div>
+      <div style="width:70%; line-height:1.5;">
+        <p>On 2017 I moved to the Czech Republic where I'm speding most of my time in the software space. With overall
+          15 years of hands-on experience, I’ve built a unique mix of skills that have shaped me into a design
+          leader.</p>
+        <p>I love coding and getting lost in the technical aspects of building things.</p>
+        <p>Today, I’m immersed in the world of data at
+          <a href="https://www.collibra.com" target="_blank" class="preview-link type-2" data-tooltip-title="Collibra"
+            data-tooltip-text="Unified governance for data and AI" data-tooltip-time="" data-tooltip-img="collibra.png">
+            Collibra ↗
+          </a>
+          <a href=target="_blank" style="color:white;"></a>
+
+        </p>
+      </div>
+    </div>
+
+
+    <!-- Inspiration Section -->
+    <div style="display:flex; gap:0px; margin-top:30px; margin-bottom:60px;">
+      <div class="sticky-label">Inspiration</div>
+      <div style="width:70%; line-height:0.5;">
+        <p><a href="https://www.youtube.com/watch?v=hdp-WYvJSO4&t=1s" target="_blank" class="preview-link type-2"
+            data-tooltip-title="Chema Madoz" data-tooltip-text="Poetry made photography" data-tooltip-time=""
+            data-tooltip-img="chema.png">
+            Chema Madoz ↗
+          </a>
+          </br><a href="https://sagmeister.com/work/beautification/" target="_blank" class="preview-link type-2"
+            data-tooltip-title="Stefan Segmeister" data-tooltip-text="Casual views on typography and beauty"
+            data-tooltip-time="" data-tooltip-img="stefan.png">
+            Stefan Segmeister ↗
+          </a>
+          </br><a href="https://en.wikipedia.org/wiki/Edward_Bernays"
+          target=" _blank" class="preview-link type-2" data-tooltip-title="Edward Bernays"
+                data-tooltip-text="Know the past to understand the present" data-tooltip-time="" data-tooltip-img="edward.png">
+                Edward Bernays ↗
+              </a>
+          </br><a href="https://open.spotify.com/artist/0epOFNiUfyON9EYx7Tpr6V" target="_blank" class="preview-link type-2"
+            data-tooltip-title="The Strokes" data-tooltip-text="A soundtrack for the important things"
+            data-tooltip-time="" data-tooltip-img="the-strokes.png">
+            The Strokes ↗
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <hr style="border: #5b5b5b solid 1px; margin-bottom: 30px;">
+
+    <button class="comic-button" onclick="openWork()">What do I do</button>
+
+    <div class="footer">
+      <p>If you are here for different reasons than learning more about me, write to
+        <a href="mailto:serfidalgo@outlook.com" target="_blank" class="preview-link type-2 no-preview"
+          style="opacity: 1" data-tooltip-title="Sergio's Email" data-tooltip-text="Drop me a line and let's talk"
+          data-tooltip-time="" data-tooltip-img="email.png">
+          serfidalgo@outlook.com
+        </a>
+      <p style="margin-top:1.8vh;">If you are still not satisfied, find me on these channels</br>
+      <div class="socialIcons">
+        <a href="https://www.linkedin.com/in/smfidalgo/" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's LinkedIn" data-tooltip-text="A traditional view of my professional life"
+          data-tooltip-time="" data-tooltip-img="sergio.png">
+          LinkedIn
+        </a>
+        <a href="https://www.dribbble/smfidalgo" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's Dribbble" data-tooltip-text="Some pieces of visual work here"
+          data-tooltip-time="" data-tooltip-img="logo-smf.png">
+          Dribbble
+        </a>
+        <a href="https://www.vimeo.com/smfidalgo" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's Vimeo" data-tooltip-text="I also had fun using DSLR cameras!"
+          data-tooltip-time="" data-tooltip-img="vimeo.png">
+          Vimeo
+        </a>
+      </div>
+      </p>
+    </div>
+
+  </div>
+
+
+
+  <!-- WORK SCREEN -->
+  <div id="workContent" class="screenContent">
+    <div class="headerTop-inner">
+      <img src="../src/smfidalgo_logo_white.svg" onclick="backToHome()" style="height:4.5vh;min-height:24px;cursor: pointer;">
+      <a class="" href="#" onclick="backToHome()" style="color:white; font-size: 1.8vh;text-decoration: none;">Back</a>
+    </div>
+
+    <h1 style="margin-top:70px;">What do I do</h1>
+
+
+    <!-- Life Section -->
+    <div style="display:flex; gap:0px; margin-top:30px;">
+      <div class="sticky-label">Since 2025</div>
+      <div style="width:70%; line-height:1.5;">
+        <p>At Collibra, as a design leader, I care about the people, processes and tools, as far as design is concerned.</p>
+      </div>
+    </div>
+
+    <!-- Work Section -->
+    <div style="display:flex; gap:0px; margin-top:30px;">
+      <div class="sticky-label">Previously</div>
+      <div style="width:70%; line-height:1.5;">
+        <p>From 2022 I worked closely with the core team at Nasdaq Private Market, helping them successfully close their
+          <a href="https://www.nasdaqprivatemarket.com/nasdaq-private-market-closes-62-4-million-series-b-financing-led-by-nasdaq-with-new-investments-from-bnp-paribas-drw-venture-capital-ubs-and-wells-fargo/"
+            target="_blank" class="preview-link"
+            data-sources="npm-0.mp4, npm-1.png, npm-2.mp4, npm-4.png">
+            Series B ↗</a>
+        <p>At NPM I led the design team while contributed to the execution efforts, from setting up the overall design infrastructure to executing on zero-to-one initiatives, or iterating solutions through data and customer feedback. </p>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:0px; margin-top:30px;">
+      <div class="sticky-label">Before that</div>
+      <div style="width:70%; line-height:1.5;">
+        <p>At <a href="https://dribbble.com/smfidalgo"
+          target="_blank" class="preview-link"
+          data-sources="product-1.mp4, product-3.png, product-2.mp4, product-4.mp4, product-5.png, product-6.png, product-7.png, product-8.png, product-9.png, product-10.png, product-11.mp4, product-12.jpg, product-13.png, product-14.png">
+          agencies ↗</a> I worked with a number of teams and clients
+          of different sizes, which allowed me to stay curious about diverse industries, business models and customer segments.</p>
+      </div>
+    </div>
+
+
+    <!-- Inspiration Section -->
+    <div style="display:flex; gap:0px; margin-top:30px;margin-bottom:60px;">
+      <div class="sticky-label">Inspiration</div>
+      <div style="width:70%; line-height:0.5;">
+        <p><a href="https://en.wikipedia.org/wiki/Don_Norman" target="_blank" class="preview-link type-2"
+            data-tooltip-title="Don Norman" data-tooltip-text="A look at everyday things" data-tooltip-time=""
+            data-tooltip-img="norman.jpg">
+            Don Norman ↗
+          </a>
+          </br><a href="https://www.svpg.com/team/marty-cagan/" target="_blank" class="preview-link type-2"
+            data-tooltip-title="Marty Cagan" data-tooltip-text="Frameworks to think, work, and win"
+            data-tooltip-time="" data-tooltip-img="marty.png">
+            Marty Cagan ↗
+          </a>
+          </br><a href="https://bradfrost.com/"
+          target=" _blank" class="preview-link type-2" data-tooltip-title="Brad Frost"
+                data-tooltip-text="Physics applied to art (Atomic design)" data-tooltip-time="" data-tooltip-img="brad.png">
+                Brad Frost ↗
+              </a>
+          </br><a href="https://www.instagram.com/erik.winkowski/" target="_blank" class="preview-link type-2"
+            data-tooltip-title="Erik Winkowski" data-tooltip-text="Even these days one can be original!"
+            data-tooltip-time="" data-tooltip-img="erik.png">
+            Erik Winkowski ↗
+          </a>
+        </p>
+      </div>
+    </div>
+
+    <hr style="border: #5b5b5b solid 1px; margin-bottom: 30px;">
+
+    <button class="comic-button" onclick="openAbout()">Who is Sergio</button>
+
+    <div class="footer">
+      <p>If you are here for different reasons than learning more about me, write to
+        <a href="mailto:serfidalgo@outlook.com" target="_blank" class="preview-link type-2 no-preview"
+          style="opacity: 1" data-tooltip-title="Sergio's Email" data-tooltip-text="Drop me a line and let's talk"
+          data-tooltip-time="" data-tooltip-img="email.png">
+          serfidalgo@outlook.com
+        </a>
+      <p style="margin-top:1.8vh;">If you are still not satisfied, find me on these channels</br>
+      <div class="socialIcons">
+        <a href="https://www.linkedin.com/in/smfidalgo/" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's LinkedIn" data-tooltip-text="A traditional view of my professional life"
+          data-tooltip-time="" data-tooltip-img="sergio.png">
+          LinkedIn
+        </a>
+        <a href="https://www.dribbble/smfidalgo" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's Dribbble" data-tooltip-text="Some pieces of visual work here"
+          data-tooltip-time="" data-tooltip-img="logo-smf.png">
+          Dribbble
+        </a>
+        <a href="https://www.vimeo.com/smfidalgo" target="_blank" class="preview-link type-2 no-preview"
+          data-tooltip-title="Sergio's Vimeo" data-tooltip-text="I also had fun using DSLR cameras!"
+          data-tooltip-time="" data-tooltip-img="vimeo.png">
+          Vimeo
+        </a>
+      </div>
+      </p>
+    </div>
+
+
+
+  </div>
+
+  <!-- refhresh button -->
+
+  <button id="refreshButton" onclick="location.reload()">
+    <div class="scroll-label">
+      <span class="line first"><i class="fa-solid fa-rotate"></i></span>
+      <span class="line second">I'm Feeling Lucky</span>
+    </div>
+  </button>
+
+  <div id="hoverPreview"></div>
+
+  <div id="tooltipCard">
+    <div class="tooltip-content">
+      <img src="" alt="Preview Image" id="tooltipImg">
+      <div class="text-block">
+        <strong id="tooltipTitle"></strong>
+        <span id="tooltipText"></span>
+      </div>
+      <div class="tooltip-time" id="tooltipTime"></div>
+    </div>
+  </div>
+
+
+  <script>
+    // --- CONSTANTS ---
+    const canvas = document.getElementById('myCanvas');
+    const ctx = canvas.getContext('2d');
+    const handImg = document.getElementById('handImage');
+
+    const HUMAN_WIDTH = 1618.9, HUMAN_HEIGHT = 1079;
+    const screenInset = { top: 0.0973, left: 0.3760, width: 0.2632, height: 0.8007 };
+
+    // --- CLOCK & DOT ---
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toLocaleTimeString('en-GB', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Prague'
+      }) + " Europe/Prague";
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // --- BLINKING DOT ---
+    setInterval(() => {
+      const dot = document.getElementById('clockDot');
+      dot.style.opacity = (dot.style.opacity === '0' ? '1' : '0');
+    }, 500);
+
+    // --- RESIZE FUNCTION ---
+    function resizeAll() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const isMobile = window.innerWidth <= 560;
+      const availableHeight = isMobile ? window.innerHeight : window.innerHeight * 0.95;
+      const humanHeight = availableHeight;
+      const humanWidth = humanHeight * (HUMAN_WIDTH / HUMAN_HEIGHT);
+      const humanX = (window.innerWidth - humanWidth) / 2;
+      const humanY = window.innerHeight - humanHeight;
+
+      const frame = isMobile ?
+        { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight } :
+        {
+          x: humanX + humanWidth * screenInset.left,
+          y: humanY + humanHeight * screenInset.top,
+          w: humanWidth * screenInset.width,
+          h: humanHeight * screenInset.height
+        };
+
+      ['homeContent', 'aboutContent', 'workContent'].forEach(id => {
+        const el = document.getElementById(id);
+        el.style.left = frame.x + "px";
+        el.style.top = frame.y + "px";
+        el.style.width = frame.w + "px";
+        el.style.height = frame.h + "px";
+      });
+
+      handImg.style.left = humanX + "px";
+      handImg.style.top = humanY + "px";
+      handImg.style.width = humanWidth + "px";
+      handImg.style.height = humanHeight + "px";
+    }
+
+    // --- DRAW BACKGROUND ---
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const bg = new Image();
+      bg.src = "../src/background.png";
+      bg.onload = () => ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    }
+
+    window.addEventListener('resize', () => {
+      resizeAll();
+      draw();
+    });
+
+    resizeAll();
+    draw();
+
+    // --- HAND IMAGE OPTIONS ---
+const handOptions = [
+  { home: "../src/Human.png", about: "../src/Human-white.png" },
+  { home: "../src/Alien.png", about: "../src/Alien-white.png" },
+  { home: "../src/Bones.png", about: "../src/Bones-white.png" },
+  { home: "../src/Cyberpunk.png", about: "../src/Cyberpunk-white.png" },
+  { home: "../src/Grandma.png", about: "../src/Grandma-white.png" },
+  { home: "../src/Robot.png", about: "../src/Robot-white.png" },
+  { home: "../src/Mockup.png", about: "../src/Mockup-white.png" },
+  { home: "../src/Pixel.png", about: "../src/Pixel-white.png" },
+  { home: "../src/Manga.png", about: "../src/Manga-white.png" },
+  { home: "../src/Illustration.png", about: "../src/Illustration-white.png" },
+  { home: "../src/Clay.png", about: "../src/Clay-white.png" }
+];
+const nonMockupOptions = handOptions.filter(h => !h.home.includes("Mockup"));
+
+
+let selectedHand;
+
+if (!sessionStorage.getItem('seenHand')) {
+  // First time ever — show Mockup, but preselect next
+  const mockupIndex = handOptions.findIndex(h => h.home.includes("Mockup"));
+  sessionStorage.setItem('seenHand', 'true');
+  sessionStorage.setItem('lastHandIndex', mockupIndex);
+
+  // Preselect a different one for next time
+  let secondIndex;
+  do {
+    secondIndex = handOptions.indexOf(nonMockupOptions[Math.floor(Math.random() * nonMockupOptions.length)]);
+
+  } while (secondIndex === mockupIndex);
+  sessionStorage.setItem('nextHandIndex', secondIndex);
+
+  selectedHand = handOptions[mockupIndex];
+} else {
+  // Second+ visits: use preselected nextHandIndex and compute the next one
+  const currentIndex = parseInt(sessionStorage.getItem('nextHandIndex'), 10);
+  let nextIndex;
+  do {
+    nextIndex = Math.floor(Math.random() * handOptions.length);
+  } while (nextIndex === currentIndex);
+
+  sessionStorage.setItem('lastHandIndex', currentIndex);
+  sessionStorage.setItem('nextHandIndex', nextIndex);
+  selectedHand = handOptions[currentIndex];
+}
+
+handImg.src = selectedHand.home;
+
+
+
+
+    // --- NAVIGATION ---
+    function openAbout() {
+      document.getElementById('homeContent').style.display = 'none';
+      document.getElementById('workContent').style.display = 'none';
+      document.getElementById('aboutContent').style.display = 'block';
+      document.getElementById('aboutContent').scrollTop = 0;
+      handImg.src = selectedHand.about;
+    }
+
+    function openWork() {
+      document.getElementById('homeContent').style.display = 'none';
+      document.getElementById('aboutContent').style.display = 'none';
+      document.getElementById('workContent').style.display = 'block';
+      document.getElementById('workContent').scrollTop = 0;
+      handImg.src = selectedHand.about;
+    }
+
+    function backToHome() {
+      document.getElementById('aboutContent').style.display = 'none';
+      document.getElementById('workContent').style.display = 'none';
+      document.getElementById('homeContent').style.display = 'flex';
+      handImg.src = selectedHand.home;
+    }
+
+    // --- LINKS HOVER PREVIEW ---
+    (function () {
+    const preview = document.getElementById('hoverPreview');
+    if (!preview) return;
+
+    const isMobile = window.innerWidth <= 560;
+    let activeLink = null; // track currently previewing link
+    let cycleTimeout = null;
+    let frameIdx = 0;
+    let sources = [];
+
+    function addMediaElement(el) {
+        const rotation = (Math.random() * 14 - 7).toFixed(1);
+        el.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+        el.style.position = 'absolute';
+        el.style.top = '35%';
+        el.style.left = '50%';
+        el.style.zIndex = 1999;
+        preview.appendChild(el);
+    }
+
+    function stackNextMedia() {
+        if (!sources.length) return;
+
+        const source = sources[frameIdx];
+        const ext = source.split('.').pop().toLowerCase();
+        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+        const isVideo = ['mp4', 'webm', 'ogg'].includes(ext);
+
+        if (isImage) {
+            const img = new Image();
+            img.src = source.includes('/') ? source : '../src/pics/' + source;
+            img.onload = () => {
+                addMediaElement(img);
+                frameIdx = (frameIdx + 1) % sources.length;
+                cycleTimeout = setTimeout(stackNextMedia, 800); // 0.8s per image
+            };
+        }
+
+        if (isVideo) {
+            const video = document.createElement('video');
+            video.src = source.includes('/') ? source : '../src/' + source;
+            video.autoplay = true;
+            video.muted = true;
+            video.playsInline = true;
+            video.controls = false;
+
+            video.oncanplay = () => {
+                addMediaElement(video);
+                video.play();
+            };
+
+            video.onended = () => {
+                frameIdx = (frameIdx + 1) % sources.length;
+                stackNextMedia();
+            };
+        }
+    }
+
+    function resetPreview() {
+        if (activeLink) activeLink.classList.remove('active-blend');
+        document.querySelectorAll('a.preview-link').forEach(other => other.style.opacity = '');
+        document.querySelectorAll('#aboutContent p').forEach(p => p.style.opacity = '');
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+        clearTimeout(cycleTimeout);
+        activeLink = null;
+    }
+
+    // Global tap to close logic (outside the active link)
+    if (isMobile) {
+        document.body.addEventListener('click', (e) => {
+            if (activeLink && !activeLink.contains(e.target)) {
+                resetPreview();
+            }
+        }, true); // capture phase to catch early
+    }
+
+    document.querySelectorAll('a.preview-link:not(.no-preview)').forEach(link => {
+        let tappedOnce = false;
+
+        if (isMobile) {
+            link.addEventListener('click', (e) => {
+                if (activeLink && activeLink !== link) {
+                    resetPreview(); // close any previously open previews
+                    tappedOnce = false;
+                }
+
+                if (!tappedOnce) {
+                    e.preventDefault();
+                    sources = (link.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
+                    if (!sources.length) return;
+
+                    frameIdx = 0;
+                    tappedOnce = true;
+                    activeLink = link;
+
+                    // Show preview
+                    preview.innerHTML = '';
+                    preview.style.display = 'block';
+                    link.classList.add('active-blend');
+                    stackNextMedia();
+                } else {
+                    // Second tap follows the link
+                    tappedOnce = false;
+                    resetPreview();
+                    window.location.href = link.href;
+                }
+            });
+        } else {
+            // Desktop hover behavior
+            link.addEventListener('mouseenter', () => {
+                sources = (link.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
+                frameIdx = 0;
+
+                activeLink = link;
+                link.classList.add('active-blend');
+                document.querySelectorAll('a.preview-link').forEach(other => {
+                    if (other !== link) {
+                        other.classList.remove('active-blend');
+                        other.style.opacity = '0.1';
+                    }
+                });
+                document.querySelectorAll('#aboutContent p').forEach(p => {
+                    if (!p.contains(link)) p.style.opacity = '0.05';
+                });
+
+                preview.innerHTML = '';
+                preview.style.display = 'block';
+                stackNextMedia();
+            });
+
+            link.addEventListener('mouseleave', () => {
+                resetPreview();
+            });
+        }
+    });
+})();
+
+
+
+
+
+
+
+    // --- PARAGRAPH VISIBILITY (IntersectionObserver) ---
+    function setupParagraphObservers() {
+      ['aboutContent', 'workContent'].forEach(containerID => {
+        const container = document.getElementById(containerID);
+        const paragraphs = container.querySelectorAll('p');
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            } else {
+              entry.target.classList.remove('visible');
+            }
+          });
+        }, {
+          root: container,
+          threshold: 0.5,
+          rootMargin: "-22% 0px -30% 0px"
+        });
+
+        paragraphs.forEach(p => observer.observe(p));
+      });
+    }
+
+    setupParagraphObservers();
+
+
+    // Cookie disclaimer
+    function closeDisclaimer() {
+      document.getElementById('aiDisclaimer').style.display = 'none';
+    }
+
+    // Check if disclaimer has already been dismissed in this session
+    if (!sessionStorage.getItem('aiDisclaimerDismissed')) {
+      document.getElementById('aiDisclaimer').style.display = 'block';
+    } else {
+      document.getElementById('aiDisclaimer').style.display = 'none';
+    }
+
+    function closeDisclaimer() {
+      document.getElementById('aiDisclaimer').style.display = 'none';
+      sessionStorage.setItem('aiDisclaimerDismissed', 'true');
+    }
+
+    // Tooltip V2\
+    const tooltip = document.getElementById('tooltipCard');
+    let hideTimeout = null;
+    let lastHoveredLink = null;
+
+    function showTooltip(link) {
+      clearTimeout(hideTimeout);
+
+      lastHoveredLink = link;
+
+      // Get data
+      const img = link.getAttribute('data-tooltip-img') || '';
+      const title = link.getAttribute('data-tooltip-title') || '';
+      const text = link.getAttribute('data-tooltip-text') || '';
+      const time = link.getAttribute('data-tooltip-time') || '';
+
+      document.getElementById('tooltipImg').src = img.includes('/') ? img : '../src/pics/' + img;
+      document.getElementById('tooltipTitle').textContent = title;
+      document.getElementById('tooltipText').textContent = text;
+      document.getElementById('tooltipTime').textContent = time;
+
+      // Position
+      const rect = link.getBoundingClientRect();
+      tooltip.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+      tooltip.style.left = (rect.left + window.scrollX) + 'px';
+
+      tooltip.style.display = 'block';
+      requestAnimationFrame(() => {
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'translateY(0)';
+      });
+    }
+
+    function hideTooltip() {
+      tooltip.style.opacity = '0';
+      tooltip.style.transform = 'translateY(8px)';
+      hideTimeout = setTimeout(() => {
+        tooltip.style.display = 'none';
+      }, 300);
+    }
+
+    document.querySelectorAll('a.preview-link.type-2').forEach(link => {
+      link.addEventListener('mouseenter', () => showTooltip(link));
+      link.addEventListener('mouseleave', (e) => {
+        if (!e.relatedTarget || !tooltip.contains(e.relatedTarget)) {
+          hideTooltip();
+        }
+      });
+    });
+
+
+    // Hide when leaving tooltip area
+    tooltip.addEventListener('mouseleave', () => {
+      hideTooltip();
+    });
+
+
+
+
+
+
+  </script>
+
+<div id="mediaOverlay" style="display:none;">
+  <div id="mediaBackdrop"></div>
+  <div id="hoverPreview"></div>
+</div>
+
+</body>
+
+</html>
