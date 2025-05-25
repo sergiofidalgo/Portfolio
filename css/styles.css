@@ -76,10 +76,10 @@ nav#menu {
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
       font-size: 14px;
       max-width: 320px;
-      z-index: 5000;
+      z-index: 10000;
       opacity: 0;
       transform: translateY(20px);
-      animation: fadeInUp 0.4s ease-out forwards;
+      animation: none; /* Changed for preloader */
     }
 
     #aiDisclaimer p {
@@ -103,16 +103,18 @@ nav#menu {
       background: #222;
     }
 
-    /* Mobile centered */
-    @media (max-width: 560px) {
+    /* Mobile centered: This rule will be consolidated and removed. */
+    /* @media (max-width: 560px) {
       #aiDisclaimer {
         left: 50%;
         transform: translateX(-50%) translateY(20px);
         max-width: 90vw;
       }
-    }
+    } */ /* Commented out as it's removed */
 
     /* Animation keyframes */
+    body.preload-finished #aiDisclaimer { animation: fadeInUp 0.4s ease-out forwards; }
+
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -130,15 +132,33 @@ nav#menu {
       background: #222;
     }
 
-    /* Centered for mobile */
+    /* Mobile full-width disclaimer at bottom */
     @media (max-width: 560px) {
       #aiDisclaimer {
         border-radius: 0;
         left: 0;
-        transform: translateX(-50%);
-        max-width: 100%;
+        right: 0; /* Added for full width */
+        transform: translateX(0); /* Corrected transform */
+        width: auto; /* Let left/right define width */
+        max-width: 100%; /* Keep this */
         position: fixed;
         bottom: 0;
+        /* padding: 16px 20px; is inherited from main rule */
+        box-sizing: border-box; /* Add box-sizing */
+        /* The translateY for animation is handled by the main rule and keyframes */
+      }
+
+      #tooltipCard {
+            position: fixed;
+            bottom: 20px; /* Adjust as needed, e.g., if it overlaps with disclaimer */
+            left: 5vw;
+            right: 5vw;
+            width: 90vw;
+            max-width: 90vw; /* Explicitly set */
+            min-width: 0; /* Override desktop min-width if any */
+            transform: translateY(0); /* Override desktop animation start for mobile */
+            z-index: 21000; /* Ensure it's above other elements, including preloader if active */
+            /* Opacity and transition are handled by existing rules/JS, but ensure no conflicting transform */
       }
     }
 
@@ -285,13 +305,18 @@ padding: 2vw 3vh;
     }
 
     #homeContent {
-      display: flex;
+      display: flex; /* This will be overridden by JS initially if not the active screen */
       flex-direction: column;
       justify-content: space-between;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+      /* transform transition removed as per plan */
+      transform-style: preserve-3d; /* Keep for 3D effects if any children use it */
+      will-change: opacity, visibility; /* Changed from transform */
     }
 
-    /* Allow 3D transforms */
-    #homeContent,
+    /* Allow 3D transforms for handImage specifically */
     #handImage {
       transition: transform 0.1s ease;
       transform-style: preserve-3d;
@@ -301,16 +326,24 @@ padding: 2vw 3vh;
 
 
     #aboutContent {
-      display: none;
+      display: none; /* This will be overridden by JS when this screen is active */
       background: #222;
       color: white;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+      will-change: opacity, visibility;
     }
 
 
     #workContent {
-      display: none;
+      display: none; /* This will be overridden by JS when this screen is active */
       background: #222;
       color: white;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out, visibility 0s linear 0.5s;
+      will-change: opacity, visibility;
     }
 
     /* HEADER */
@@ -576,3 +609,19 @@ font-size: 1.4vh;
       font-size: 12px;
       color: #aaa;
     }
+
+#preloader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #000; /* Same as body background */
+    z-index: 20000; /* Higher than anything else */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Helvetica, Arial, sans-serif;
+    color: white;
+    font-size: 20px;
+}

@@ -2,6 +2,14 @@
     const canvas = document.getElementById('myCanvas');
     const ctx = canvas.getContext('2d');
     const handImg = document.getElementById('handImage');
+    // Cached DOM Elements
+    const clockElement = document.getElementById('clock');
+    const clockDotElement = document.getElementById('clockDot');
+    const homeContentEl = document.getElementById('homeContent');
+    const aboutContentEl = document.getElementById('aboutContent');
+    const workContentEl = document.getElementById('workContent');
+    const aiDisclaimerEl = document.getElementById('aiDisclaimer');
+    const preloaderEl = document.getElementById('preloader'); // For showPageContent
 
     const HUMAN_WIDTH = 1618.9, HUMAN_HEIGHT = 1079;
     const screenInset = { top: 0.0973, left: 0.3760, width: 0.2632, height: 0.8007 };
@@ -9,17 +17,20 @@
     // --- CLOCK & DOT ---
     function updateClock() {
       const now = new Date();
-      document.getElementById('clock').innerText = now.toLocaleTimeString('en-GB', {
-        hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Prague'
-      }) + " Europe/Prague";
+      if (clockElement) { // Check if element exists
+        clockElement.innerText = now.toLocaleTimeString('en-GB', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Prague'
+        }) + " Europe/Prague";
+      }
     }
     setInterval(updateClock, 1000);
     updateClock();
 
     // --- BLINKING DOT ---
     setInterval(() => {
-      const dot = document.getElementById('clockDot');
-      dot.style.opacity = (dot.style.opacity === '0' ? '1' : '0');
+      if (clockDotElement) { // Check if element exists
+        clockDotElement.style.opacity = (clockDotElement.style.opacity === '0' ? '1' : '0');
+      }
     }, 500);
 
     // --- RESIZE FUNCTION ---
@@ -43,12 +54,14 @@
           h: humanHeight * screenInset.height
         };
 
-      ['homeContent', 'aboutContent', 'workContent'].forEach(id => {
-        const el = document.getElementById(id);
-        el.style.left = frame.x + "px";
-        el.style.top = frame.y + "px";
-        el.style.width = frame.w + "px";
-        el.style.height = frame.h + "px";
+      // Use cached elements for content sections
+      [homeContentEl, aboutContentEl, workContentEl].forEach(el => {
+        if (el) { // Check if element exists
+            el.style.left = frame.x + "px";
+            el.style.top = frame.y + "px";
+            el.style.width = frame.w + "px";
+            el.style.height = frame.h + "px";
+        }
       });
 
       handImg.style.left = humanX + "px";
@@ -127,26 +140,30 @@ handImg.src = selectedHand.home;
 
     // --- NAVIGATION ---
     function openAbout() {
-      document.getElementById('homeContent').style.display = 'none';
-      document.getElementById('workContent').style.display = 'none';
-      document.getElementById('aboutContent').style.display = 'block';
-      document.getElementById('aboutContent').scrollTop = 0;
-      handImg.src = selectedHand.about;
+      if (homeContentEl) homeContentEl.style.display = 'none';
+      if (workContentEl) workContentEl.style.display = 'none';
+      if (aboutContentEl) {
+        aboutContentEl.style.display = 'block';
+        aboutContentEl.scrollTop = 0;
+      }
+      if (handImg && selectedHand) handImg.src = selectedHand.about;
     }
 
     function openWork() {
-      document.getElementById('homeContent').style.display = 'none';
-      document.getElementById('aboutContent').style.display = 'none';
-      document.getElementById('workContent').style.display = 'block';
-      document.getElementById('workContent').scrollTop = 0;
-      handImg.src = selectedHand.about;
+      if (homeContentEl) homeContentEl.style.display = 'none';
+      if (aboutContentEl) aboutContentEl.style.display = 'none';
+      if (workContentEl) {
+        workContentEl.style.display = 'block';
+        workContentEl.scrollTop = 0;
+      }
+      if (handImg && selectedHand) handImg.src = selectedHand.about;
     }
 
     function backToHome() {
-      document.getElementById('aboutContent').style.display = 'none';
-      document.getElementById('workContent').style.display = 'none';
-      document.getElementById('homeContent').style.display = 'flex';
-      handImg.src = selectedHand.home;
+      if (aboutContentEl) aboutContentEl.style.display = 'none';
+      if (workContentEl) workContentEl.style.display = 'none';
+      if (homeContentEl) homeContentEl.style.display = 'flex';
+      if (handImg && selectedHand) handImg.src = selectedHand.home;
     }
 
     // --- LINKS HOVER PREVIEW ---
@@ -171,118 +188,156 @@ handImg.src = selectedHand.home;
     }
 
     function stackNextMedia() {
-        if (!sources.length) return;
+        if (!activeLink) { // Check 1 from instructions
+            clearTimeout(cycleTimeout);
+            return;
+        }
+        if (!sources.length || frameIdx >= sources.length) { // Ensure frameIdx is within bounds
+             if (sources.length > 0) frameIdx = 0; // Loop if sources exist
+             else { // No sources, reset
+                 resetPreview(); 
+                 return;
+             }
+        }
 
         const source = sources[frameIdx];
         const ext = source.split('.').pop().toLowerCase();
         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
         const isVideo = ['mp4', 'webm', 'ogg'].includes(ext);
 
+        preview.innerHTML = ''; // Check 1 (modified) from instructions: Clear before adding new media
+
         if (isImage) {
             const img = new Image();
             img.src = source;
             img.onload = () => {
+                if (!activeLink) return; // Check again in async callback
                 addMediaElement(img);
                 frameIdx = (frameIdx + 1) % sources.length;
-                cycleTimeout = setTimeout(stackNextMedia, 800); // 0.8s per image
+                cycleTimeout = setTimeout(stackNextMedia, 800); // Check 1 (modified) from instructions: Only for images
             };
-        }
-
-        if (isVideo) {
+            img.onerror = () => { // Check 1 from instructions
+                if (!activeLink) return;
+                console.error("Error loading image:", source);
+                frameIdx = (frameIdx + 1) % sources.length;
+                cycleTimeout = setTimeout(stackNextMedia, 100); 
+            };
+        } else if (isVideo) {
             const video = document.createElement('video');
             video.src = source;
             video.autoplay = true;
             video.muted = true;
             video.playsInline = true;
-            video.controls = false;
+            video.controls = false; // Keep controls false as per original
 
             video.oncanplay = () => {
+                if (!activeLink) return; // Check again in async callback
                 addMediaElement(video);
                 video.play();
             };
-
             video.onended = () => {
+                if (!activeLink) return;
                 frameIdx = (frameIdx + 1) % sources.length;
-                stackNextMedia();
+                stackNextMedia(); // Videos transition on onended
             };
+            video.onerror = () => { // Check 1 from instructions
+                if (!activeLink) return;
+                console.error("Error loading video:", source);
+                frameIdx = (frameIdx + 1) % sources.length;
+                cycleTimeout = setTimeout(stackNextMedia, 100);
+            };
+        } else {
+            // Check 1 from instructions: Handle unknown extensions
+            console.warn("Unknown media type:", source);
+            frameIdx = (frameIdx + 1) % sources.length;
+            cycleTimeout = setTimeout(stackNextMedia, 50);
         }
+    }
+    
+    function startPreview(linkElement) { // Check 3 from instructions
+        clearTimeout(cycleTimeout); // Check 3 from instructions
+
+        sources = (linkElement.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
+        if (!sources.length) return;
+
+        frameIdx = 0;
+        activeLink = linkElement; // Set the new active link
+
+        if (!isMobile) { // Desktop specific dimming
+            activeLink.classList.add('active-blend');
+            document.querySelectorAll('a.preview-link').forEach(other => {
+                if (other !== activeLink) {
+                    other.classList.remove('active-blend');
+                    other.style.opacity = '0.1';
+                }
+            });
+            document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => { // Check 3 from instructions
+                if (!p.contains(activeLink)) p.style.opacity = '0.05';
+            });
+        } else { // Mobile specific highlighting (if any)
+            activeLink.classList.add('active-blend'); // Keep consistent blend mode if used on mobile
+        }
+        
+        preview.innerHTML = ''; // Clear preview before starting
+        preview.style.display = 'block';
+        stackNextMedia();
     }
 
     function resetPreview() {
-        if (activeLink) activeLink.classList.remove('active-blend');
+        const previouslyActiveLink = activeLink; // Store for potential class removal
+        activeLink = null; // Check 2 from instructions: Set activeLink to null first
+        clearTimeout(cycleTimeout);
+
+        if (previouslyActiveLink) previouslyActiveLink.classList.remove('active-blend');
+        
         document.querySelectorAll('a.preview-link').forEach(other => other.style.opacity = '');
-        document.querySelectorAll('#aboutContent p').forEach(p => p.style.opacity = '');
+        document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => p.style.opacity = ''); // Check 2 from instructions
+        
         preview.innerHTML = '';
         preview.style.display = 'none';
-        clearTimeout(cycleTimeout);
-        activeLink = null;
     }
 
     // Global tap to close logic (outside the active link)
     if (isMobile) {
         document.body.addEventListener('click', (e) => {
-            if (activeLink && !activeLink.contains(e.target)) {
+            // Check 6 from instructions
+            if (activeLink && !activeLink.contains(e.target) && !preview.contains(e.target)) {
                 resetPreview();
             }
         }, true); // capture phase to catch early
     }
 
     document.querySelectorAll('a.preview-link:not(.no-preview)').forEach(link => {
-        let tappedOnce = false;
-
         if (isMobile) {
+            // Check 4 from instructions: Mobile Click Logic
             link.addEventListener('click', (e) => {
-                if (activeLink && activeLink !== link) {
-                    resetPreview(); // close any previously open previews
-                    tappedOnce = false;
+                if (activeLink === link) { 
+                    resetPreview(); 
+                    // Allow default navigation by not calling e.preventDefault() and returning
+                    return; 
                 }
 
-                if (!tappedOnce) {
-                    e.preventDefault();
-                    sources = (link.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
-                    if (!sources.length) return;
+                e.preventDefault(); 
 
-                    frameIdx = 0;
-                    tappedOnce = true;
-                    activeLink = link;
-
-                    // Show preview
-                    preview.innerHTML = '';
-                    preview.style.display = 'block';
-                    link.classList.add('active-blend');
-                    stackNextMedia();
-                } else {
-                    // Second tap follows the link
-                    tappedOnce = false;
-                    resetPreview();
-                    window.location.href = link.href;
+                if (activeLink && activeLink !== link) { 
+                    resetPreview(); // Reset if a *different* link was active
                 }
+                startPreview(link); // Use link (e.currentTarget)
             });
         } else {
             // Desktop hover behavior
             link.addEventListener('mouseenter', () => {
-                sources = (link.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
-                frameIdx = 0;
-
-                activeLink = link;
-                link.classList.add('active-blend');
-                document.querySelectorAll('a.preview-link').forEach(other => {
-                    if (other !== link) {
-                        other.classList.remove('active-blend');
-                        other.style.opacity = '0.1';
-                    }
-                });
-                document.querySelectorAll('#aboutContent p').forEach(p => {
-                    if (!p.contains(link)) p.style.opacity = '0.05';
-                });
-
-                preview.innerHTML = '';
-                preview.style.display = 'block';
-                stackNextMedia();
+                if (activeLink && activeLink !== link) { // If another link's preview is active, reset it first
+                    resetPreview();
+                }
+                startPreview(link);
             });
 
+            // Check 5 from instructions: Desktop mouseleave logic
             link.addEventListener('mouseleave', () => {
-                resetPreview();
+                if (activeLink === link) { 
+                    resetPreview();
+                }
             });
         }
     });
@@ -322,19 +377,26 @@ handImg.src = selectedHand.home;
 
 
     // Cookie disclaimer
-    function closeDisclaimer() {
-      document.getElementById('aiDisclaimer').style.display = 'none';
-    }
+    // Note: The original code had two functions named closeDisclaimer.
+    // Assuming the second one is the intended one to be called by the button.
+    // The first one was immediately overwritten.
+    
+    // This function is defined but immediately overwritten by the one below.
+    // function closeDisclaimer() { 
+    //   if(aiDisclaimerEl) aiDisclaimerEl.style.display = 'none';
+    // }
 
     // Check if disclaimer has already been dismissed in this session
-    if (!sessionStorage.getItem('aiDisclaimerDismissed')) {
-      document.getElementById('aiDisclaimer').style.display = 'block';
-    } else {
-      document.getElementById('aiDisclaimer').style.display = 'none';
+    if (aiDisclaimerEl) { // Check if element exists
+        if (!sessionStorage.getItem('aiDisclaimerDismissed')) {
+          aiDisclaimerEl.style.display = 'block';
+        } else {
+          aiDisclaimerEl.style.display = 'none';
+        }
     }
 
-    function closeDisclaimer() {
-      document.getElementById('aiDisclaimer').style.display = 'none';
+    function closeDisclaimer() { // This is the one that will actually be used
+      if (aiDisclaimerEl) aiDisclaimerEl.style.display = 'none';
       sessionStorage.setItem('aiDisclaimerDismissed', 'true');
     }
 
@@ -361,14 +423,30 @@ handImg.src = selectedHand.home;
 
       // Position
       const rect = link.getBoundingClientRect();
-      tooltip.style.top = (rect.bottom + window.scrollY + 8) + 'px';
-      tooltip.style.left = (rect.left + window.scrollX) + 'px';
+      const isMobile = window.innerWidth <= 560;
 
-      tooltip.style.display = 'block';
-      requestAnimationFrame(() => {
-        tooltip.style.opacity = '1';
-        tooltip.style.transform = 'translateY(0)';
-      });
+      tooltip.style.display = 'block'; // Show it first
+        
+      if (isMobile) {
+          // For mobile, CSS now handles fixed positioning (bottom of viewport).
+          // We just need to trigger the opacity/transform animation correctly.
+          // Override transform from desktop version if it was applied before display:block
+          tooltip.style.transform = 'translateY(20px)'; // Start slightly lower for mobile animation
+          tooltip.style.opacity = '0';
+          requestAnimationFrame(() => {
+              tooltip.style.opacity = '1';
+              tooltip.style.transform = 'translateY(0)';
+          });
+      } else {
+          // Existing desktop positioning
+          tooltip.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+          tooltip.style.left = (rect.left + window.scrollX) + 'px';
+          // Desktop animation (already starts with opacity 0, transform translateY(8px) via CSS)
+          requestAnimationFrame(() => {
+              tooltip.style.opacity = '1';
+              tooltip.style.transform = 'translateY(0)';
+          });
+      }
     }
 
     function hideTooltip() {
@@ -393,3 +471,30 @@ handImg.src = selectedHand.home;
     tooltip.addEventListener('mouseleave', () => {
       hideTooltip();
     });
+
+// --- PRELOADER LOGIC ---
+function showPageContent() {
+    if (preloaderEl) { // Use cached element
+        preloaderEl.style.display = 'none';
+    }
+
+    if (homeContentEl) { // Use cached element
+        homeContentEl.style.opacity = '1';
+        homeContentEl.style.visibility = 'visible';
+    }
+    
+    // Potentially show other content sections if one of them was the active one,
+    // but for now, the FOUC fix is primarily for the initial load of homeContent.
+    // If aboutContent or workContent were the entry point, they'd need similar treatment.
+    // For example, if 'aboutContent' was meant to be visible:
+    // const aboutContent = aboutContentEl; // Use cached element
+    // if (aboutContent && aboutContent.style.display === 'block') { // Or however its visibility is determined
+    //     aboutContent.style.opacity = '1';
+    //     aboutContent.style.visibility = 'visible';
+    // }
+
+    document.body.classList.add('preload-finished');
+}
+
+// Refined Preloader Trigger: Call showPageContent when all resources are loaded
+window.onload = showPageContent;
