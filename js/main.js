@@ -140,29 +140,67 @@ handImg.src = selectedHand.home;
 
     // --- NAVIGATION ---
     function openAbout() {
-      if (homeContentEl) homeContentEl.style.display = 'none';
-      if (workContentEl) workContentEl.style.display = 'none';
+      if (homeContentEl) {
+        homeContentEl.style.display = 'none';
+        homeContentEl.style.opacity = '0';
+        homeContentEl.style.visibility = 'hidden';
+      }
+      if (workContentEl) {
+        workContentEl.style.display = 'none';
+        workContentEl.style.opacity = '0';
+        workContentEl.style.visibility = 'hidden';
+      }
       if (aboutContentEl) {
         aboutContentEl.style.display = 'block';
+        // Trigger reflow before changing opacity for transition
+        aboutContentEl.offsetHeight; // NOSONAR: This is a deliberate reflow trigger
+        aboutContentEl.style.opacity = '1';
+        aboutContentEl.style.visibility = 'visible';
         aboutContentEl.scrollTop = 0;
       }
       if (handImg && selectedHand) handImg.src = selectedHand.about;
     }
 
     function openWork() {
-      if (homeContentEl) homeContentEl.style.display = 'none';
-      if (aboutContentEl) aboutContentEl.style.display = 'none';
+      if (homeContentEl) {
+        homeContentEl.style.display = 'none';
+        homeContentEl.style.opacity = '0';
+        homeContentEl.style.visibility = 'hidden';
+      }
+      if (aboutContentEl) {
+        aboutContentEl.style.display = 'none';
+        aboutContentEl.style.opacity = '0';
+        aboutContentEl.style.visibility = 'hidden';
+      }
       if (workContentEl) {
         workContentEl.style.display = 'block';
+        // Trigger reflow before changing opacity for transition
+        workContentEl.offsetHeight; // NOSONAR: This is a deliberate reflow trigger
+        workContentEl.style.opacity = '1';
+        workContentEl.style.visibility = 'visible';
         workContentEl.scrollTop = 0;
       }
       if (handImg && selectedHand) handImg.src = selectedHand.about;
     }
 
     function backToHome() {
-      if (aboutContentEl) aboutContentEl.style.display = 'none';
-      if (workContentEl) workContentEl.style.display = 'none';
-      if (homeContentEl) homeContentEl.style.display = 'flex';
+      if (aboutContentEl) {
+        aboutContentEl.style.display = 'none';
+        aboutContentEl.style.opacity = '0';
+        aboutContentEl.style.visibility = 'hidden';
+      }
+      if (workContentEl) {
+        workContentEl.style.display = 'none';
+        workContentEl.style.opacity = '0';
+        workContentEl.style.visibility = 'hidden';
+      }
+      if (homeContentEl) {
+        homeContentEl.style.display = 'flex';
+        // Trigger reflow before changing opacity for transition
+        homeContentEl.offsetHeight; // NOSONAR: This is a deliberate reflow trigger
+        homeContentEl.style.opacity = '1';
+        homeContentEl.style.visibility = 'visible';
+      }
       if (handImg && selectedHand) handImg.src = selectedHand.home;
     }
 
