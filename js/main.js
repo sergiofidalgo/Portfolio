@@ -474,32 +474,70 @@ handImg.src = selectedHand.home;
       document.getElementById('tooltipText').textContent = text;
       document.getElementById('tooltipTime').textContent = time;
 
-      // Position
+      // Measurement Phase
+      tooltip.style.display = 'block';
+      tooltip.style.visibility = 'hidden'; // Keep hidden during measurement
+      tooltip.style.opacity = '0';         // Ensure fully transparent
+      tooltip.style.transform = 'translateY(8px)'; // Reset to its base CSS transform for consistent measurement start
+      const tooltipWidth = tooltip.offsetWidth;
+      const tooltipHeight = tooltip.offsetHeight;
+
+      // Position Calculation Phase
       const rect = link.getBoundingClientRect();
       const isMobile = window.innerWidth <= 560;
+      const margin = 8; // Small margin from viewport edges
 
-      tooltip.style.display = 'block'; // Show it first
-        
+      let newTop = rect.bottom + window.scrollY + margin; // Default position below the link
+      let newLeft = rect.left + window.scrollX;         // Default left alignment
+
       if (isMobile) {
-          // For mobile, CSS now handles fixed positioning (bottom of viewport).
-          // We just need to trigger the opacity/transform animation correctly.
-          // Override transform from desktop version if it was applied before display:block
-          tooltip.style.transform = 'translateY(20px)'; // Start slightly lower for mobile animation
-          tooltip.style.opacity = '0';
-          requestAnimationFrame(() => {
-              tooltip.style.opacity = '1';
-              tooltip.style.transform = 'translateY(0)';
-          });
-      } else {
-          // Existing desktop positioning
-          tooltip.style.top = (rect.bottom + window.scrollY + 8) + 'px';
-          tooltip.style.left = (rect.left + window.scrollX) + 'px';
-          // Desktop animation (already starts with opacity 0, transform translateY(8px) via CSS)
-          requestAnimationFrame(() => {
-              tooltip.style.opacity = '1';
-              tooltip.style.transform = 'translateY(0)';
-          });
+          // Adjust newLeft
+          if (newLeft < margin) {
+              newLeft = margin;
+          } else if (newLeft + tooltipWidth > window.innerWidth - margin) {
+              newLeft = window.innerWidth - tooltipWidth - margin;
+          }
+
+          // Adjust newTop
+          if (newTop + tooltipHeight > window.innerHeight + window.scrollY - margin) { // If overflows bottom
+              newTop = rect.top + window.scrollY - tooltipHeight - margin; // Try placing above link
+              // If it also overflows top when placed above, or if default was already too high
+              if (newTop < window.scrollY + margin) { 
+                  newTop = window.scrollY + margin; 
+                  // Optional: Adjust max-height if still too tall for viewport
+                  // if (tooltipHeight > window.innerHeight - 2 * margin) {
+                  //     tooltip.style.maxHeight = (window.innerHeight - 2 * margin) + 'px';
+                  //     tooltip.style.overflowY = 'auto';
+                  // }
+              }
+          } else {
+            // Ensure newTop is not less than scrollY + margin even if it didn't overflow bottom
+             if (newTop < window.scrollY + margin) {
+                  newTop = window.scrollY + margin;
+             }
+          }
+      } else { // Desktop default positioning (can be refined similarly if needed)
+            newLeft = rect.left + window.scrollX;
+            newTop = rect.bottom + window.scrollY + 8; // Existing 8px margin for desktop
+            // Basic desktop boundary checks (can be expanded)
+            if (newLeft + tooltipWidth > window.innerWidth - margin) {
+                newLeft = window.innerWidth - tooltipWidth - margin;
+            }
+            if (newLeft < margin) {
+                newLeft = margin;
+            }
       }
+      
+      // Apply Position and Animation
+      tooltip.style.top = newTop + 'px';
+      tooltip.style.left = newLeft + 'px';
+      tooltip.style.visibility = 'visible'; // Make it visible now it's positioned
+
+      // Animate opacity and transform
+      requestAnimationFrame(() => {
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'translateY(0)';
+      });
     }
 
     function hideTooltip() {

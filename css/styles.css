@@ -147,19 +147,7 @@ nav#menu {
         box-sizing: border-box; /* Add box-sizing */
         /* The translateY for animation is handled by the main rule and keyframes */
       }
-
-      #tooltipCard {
-            position: fixed;
-            bottom: 20px; /* Adjust as needed, e.g., if it overlaps with disclaimer */
-            left: 5vw;
-            right: 5vw;
-            width: 90vw;
-            max-width: 90vw; /* Explicitly set */
-            min-width: 0; /* Override desktop min-width if any */
-            transform: translateY(0); /* Override desktop animation start for mobile */
-            z-index: 21000; /* Ensure it's above other elements, including preloader if active */
-            /* Opacity and transition are handled by existing rules/JS, but ensure no conflicting transform */
-      }
+      /* Mobile-specific #tooltipCard rule removed to allow JS positioning */
     }
 
 
