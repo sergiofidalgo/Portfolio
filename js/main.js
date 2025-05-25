@@ -474,6 +474,7 @@ handImg.src = selectedHand.home;
       document.getElementById('tooltipText').textContent = text;
       document.getElementById('tooltipTime').textContent = time;
 
+
       // Measurement Phase
       tooltip.style.display = 'block';
       tooltip.style.visibility = 'hidden'; // Keep hidden during measurement
