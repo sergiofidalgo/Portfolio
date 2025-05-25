@@ -140,66 +140,81 @@ handImg.src = selectedHand.home;
 
     // --- NAVIGATION ---
     function openAbout() {
+      // Hide homeContentEl
       if (homeContentEl) {
-        homeContentEl.style.display = 'none';
         homeContentEl.style.opacity = '0';
         homeContentEl.style.visibility = 'hidden';
+        homeContentEl.style.display = 'none';
       }
+      // Hide workContentEl
       if (workContentEl) {
-        workContentEl.style.display = 'none';
         workContentEl.style.opacity = '0';
         workContentEl.style.visibility = 'hidden';
+        workContentEl.style.display = 'none';
       }
+      
+      // Show aboutContentEl
       if (aboutContentEl) {
-        aboutContentEl.style.display = 'block';
-        // Trigger reflow before changing opacity for transition
-        aboutContentEl.offsetHeight; // NOSONAR: This is a deliberate reflow trigger
-        aboutContentEl.style.opacity = '1';
-        aboutContentEl.style.visibility = 'visible';
+        aboutContentEl.style.visibility = 'hidden'; // Start hidden
+        aboutContentEl.style.opacity = '0';         // Start transparent
+        aboutContentEl.style.display = 'block';     // Make it part of layout
+        aboutContentEl.offsetHeight;                // Force reflow
+        aboutContentEl.style.visibility = 'visible';// Make it visible
+        aboutContentEl.style.opacity = '1';         // Trigger fade-in
         aboutContentEl.scrollTop = 0;
       }
       if (handImg && selectedHand) handImg.src = selectedHand.about;
     }
 
     function openWork() {
+      // Hide homeContentEl
       if (homeContentEl) {
-        homeContentEl.style.display = 'none';
         homeContentEl.style.opacity = '0';
         homeContentEl.style.visibility = 'hidden';
+        homeContentEl.style.display = 'none';
       }
+      // Hide aboutContentEl
       if (aboutContentEl) {
-        aboutContentEl.style.display = 'none';
         aboutContentEl.style.opacity = '0';
         aboutContentEl.style.visibility = 'hidden';
+        aboutContentEl.style.display = 'none';
       }
+
+      // Show workContentEl
       if (workContentEl) {
-        workContentEl.style.display = 'block';
-        // Trigger reflow before changing opacity for transition
-        workContentEl.offsetHeight; // NOSONAR: This is a deliberate reflow trigger
-        workContentEl.style.opacity = '1';
-        workContentEl.style.visibility = 'visible';
+        workContentEl.style.visibility = 'hidden'; // Start hidden
+        workContentEl.style.opacity = '0';         // Start transparent
+        workContentEl.style.display = 'block';     // Make it part of layout
+        workContentEl.offsetHeight;                // Force reflow
+        workContentEl.style.visibility = 'visible';// Make it visible
+        workContentEl.style.opacity = '1';         // Trigger fade-in
         workContentEl.scrollTop = 0;
       }
       if (handImg && selectedHand) handImg.src = selectedHand.about;
     }
 
     function backToHome() {
+      // Hide aboutContentEl
       if (aboutContentEl) {
-        aboutContentEl.style.display = 'none';
         aboutContentEl.style.opacity = '0';
         aboutContentEl.style.visibility = 'hidden';
+        aboutContentEl.style.display = 'none';
       }
+      // Hide workContentEl
       if (workContentEl) {
-        workContentEl.style.display = 'none';
         workContentEl.style.opacity = '0';
         workContentEl.style.visibility = 'hidden';
+        workContentEl.style.display = 'none';
       }
+
+      // Show homeContentEl
       if (homeContentEl) {
-        homeContentEl.style.display = 'flex';
-        // Trigger reflow before changing opacity for transition
-        homeContentEl.offsetHeight; // NOSONAR: This is a deliberate reflow trigger
-        homeContentEl.style.opacity = '1';
-        homeContentEl.style.visibility = 'visible';
+        homeContentEl.style.visibility = 'hidden'; // Start hidden
+        homeContentEl.style.opacity = '0';         // Start transparent
+        homeContentEl.style.display = 'flex';      // Make it part of layout
+        homeContentEl.offsetHeight;                // Force reflow
+        homeContentEl.style.visibility = 'visible';// Make it visible
+        homeContentEl.style.opacity = '1';         // Trigger fade-in
       }
       if (handImg && selectedHand) handImg.src = selectedHand.home;
     }
@@ -459,32 +474,71 @@ handImg.src = selectedHand.home;
       document.getElementById('tooltipText').textContent = text;
       document.getElementById('tooltipTime').textContent = time;
 
-      // Position
+
+      // Measurement Phase
+      tooltip.style.display = 'block';
+      tooltip.style.visibility = 'hidden'; // Keep hidden during measurement
+      tooltip.style.opacity = '0';         // Ensure fully transparent
+      tooltip.style.transform = 'translateY(8px)'; // Reset to its base CSS transform for consistent measurement start
+      const tooltipWidth = tooltip.offsetWidth;
+      const tooltipHeight = tooltip.offsetHeight;
+
+      // Position Calculation Phase
       const rect = link.getBoundingClientRect();
       const isMobile = window.innerWidth <= 560;
+      const margin = 8; // Small margin from viewport edges
 
-      tooltip.style.display = 'block'; // Show it first
-        
+      let newTop = rect.bottom + window.scrollY + margin; // Default position below the link
+      let newLeft = rect.left + window.scrollX;         // Default left alignment
+
       if (isMobile) {
-          // For mobile, CSS now handles fixed positioning (bottom of viewport).
-          // We just need to trigger the opacity/transform animation correctly.
-          // Override transform from desktop version if it was applied before display:block
-          tooltip.style.transform = 'translateY(20px)'; // Start slightly lower for mobile animation
-          tooltip.style.opacity = '0';
-          requestAnimationFrame(() => {
-              tooltip.style.opacity = '1';
-              tooltip.style.transform = 'translateY(0)';
-          });
-      } else {
-          // Existing desktop positioning
-          tooltip.style.top = (rect.bottom + window.scrollY + 8) + 'px';
-          tooltip.style.left = (rect.left + window.scrollX) + 'px';
-          // Desktop animation (already starts with opacity 0, transform translateY(8px) via CSS)
-          requestAnimationFrame(() => {
-              tooltip.style.opacity = '1';
-              tooltip.style.transform = 'translateY(0)';
-          });
+          // Adjust newLeft
+          if (newLeft < margin) {
+              newLeft = margin;
+          } else if (newLeft + tooltipWidth > window.innerWidth - margin) {
+              newLeft = window.innerWidth - tooltipWidth - margin;
+          }
+
+          // Adjust newTop
+          if (newTop + tooltipHeight > window.innerHeight + window.scrollY - margin) { // If overflows bottom
+              newTop = rect.top + window.scrollY - tooltipHeight - margin; // Try placing above link
+              // If it also overflows top when placed above, or if default was already too high
+              if (newTop < window.scrollY + margin) { 
+                  newTop = window.scrollY + margin; 
+                  // Optional: Adjust max-height if still too tall for viewport
+                  // if (tooltipHeight > window.innerHeight - 2 * margin) {
+                  //     tooltip.style.maxHeight = (window.innerHeight - 2 * margin) + 'px';
+                  //     tooltip.style.overflowY = 'auto';
+                  // }
+              }
+          } else {
+            // Ensure newTop is not less than scrollY + margin even if it didn't overflow bottom
+             if (newTop < window.scrollY + margin) {
+                  newTop = window.scrollY + margin;
+             }
+          }
+      } else { // Desktop default positioning (can be refined similarly if needed)
+            newLeft = rect.left + window.scrollX;
+            newTop = rect.bottom + window.scrollY + 8; // Existing 8px margin for desktop
+            // Basic desktop boundary checks (can be expanded)
+            if (newLeft + tooltipWidth > window.innerWidth - margin) {
+                newLeft = window.innerWidth - tooltipWidth - margin;
+            }
+            if (newLeft < margin) {
+                newLeft = margin;
+            }
       }
+      
+      // Apply Position and Animation
+      tooltip.style.top = newTop + 'px';
+      tooltip.style.left = newLeft + 'px';
+      tooltip.style.visibility = 'visible'; // Make it visible now it's positioned
+
+      // Animate opacity and transform
+      requestAnimationFrame(() => {
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'translateY(0)';
+      });
     }
 
     function hideTooltip() {
@@ -517,8 +571,13 @@ function showPageContent() {
     }
 
     if (homeContentEl) { // Use cached element
-        homeContentEl.style.opacity = '1';
-        homeContentEl.style.visibility = 'visible';
+        // Apply the 6-step pattern for showing homeContentEl
+        homeContentEl.style.visibility = 'hidden'; // 1. Start hidden (explicitly, though CSS also does this)
+        homeContentEl.style.opacity = '0';         // 2. Start transparent (explicitly, though CSS also does this)
+        homeContentEl.style.display = 'flex';      // 3. Ensure it's part of layout (CSS should have this, but confirming is safe)
+        homeContentEl.offsetHeight;                // 4. Force reflow
+        homeContentEl.style.visibility = 'visible';// 5. Make it visible
+        homeContentEl.style.opacity = '1';         // 6. Trigger fade-in (CSS transition handles this)
     }
     
     // Potentially show other content sections if one of them was the active one,
