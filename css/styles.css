@@ -1,0 +1,627 @@
+html,
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+
+    h1 {
+      font-size: 4.5vh;
+      line-height: 120%;
+margin: 4vh 0vh 2vh 0vh;
+    }
+
+    p {
+      font-size: 2.2vh;
+      line-height: 150%;
+      margin: 0px 0px 1.8vh 0px;
+    }
+    
+    hr{
+        display: none;    
+    }
+    
+    
+    aside#sidebar {
+    display: none;
+}
+
+header.header {
+    display: none;
+}
+
+div#branding {
+    display: none;
+}
+
+nav#menu {
+    display: none;
+}
+
+
+    #clock {
+      font-size: 1.4vh;
+    }
+
+    /* Mobile font styles */
+    @media (max-width: 560px) {
+      h1 {
+        font-size: 32px;
+        line-height: 120%;
+      }
+
+      p {
+        font-size: 22px;
+        line-height: 150%;
+        margin-block-start: -0.15em;
+      }
+
+      #clock {
+        font-size: 14px;
+      }
+    }
+
+
+
+    #aiDisclaimer {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      color: black;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      max-width: 320px;
+      z-index: 10000;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: none; /* Changed for preloader */
+    }
+
+    #aiDisclaimer p {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      line-height: 1.4;
+      font-family: helvetica, arial;
+    }
+
+    #aiDisclaimer button {
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #aiDisclaimer button:hover {
+      background: #222;
+    }
+
+    /* Mobile centered: This rule will be consolidated and removed. */
+    /* @media (max-width: 560px) {
+      #aiDisclaimer {
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        max-width: 90vw;
+      }
+    } */ /* Commented out as it's removed */
+
+    /* Animation keyframes */
+    body.preload-finished #aiDisclaimer { animation: fadeInUp 0.4s ease-out forwards; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+
+    #aiDisclaimer button:hover {
+      background: #222;
+    }
+
+    /* Mobile full-width disclaimer at bottom */
+    @media (max-width: 560px) {
+      #aiDisclaimer {
+        border-radius: 0;
+        left: 0;
+        right: 0; /* Added for full width */
+        transform: translateX(0); /* Corrected transform */
+        width: auto; /* Let left/right define width */
+        max-width: 100%; /* Keep this */
+        position: fixed;
+        bottom: 0;
+        /* padding: 16px 20px; is inherited from main rule */
+        box-sizing: border-box; /* Add box-sizing */
+        /* The translateY for animation is handled by the main rule and keyframes */
+      }
+
+      #tooltipCard {
+            position: fixed;
+            bottom: 20px; /* Adjust as needed, e.g., if it overlaps with disclaimer */
+            left: 5vw;
+            right: 5vw;
+            width: 90vw;
+            max-width: 90vw; /* Explicitly set */
+            min-width: 0; /* Override desktop min-width if any */
+            transform: translateY(0); /* Override desktop animation start for mobile */
+            z-index: 21000; /* Ensure it's above other elements, including preloader if active */
+            /* Opacity and transition are handled by existing rules/JS, but ensure no conflicting transform */
+      }
+    }
+
+
+    #aboutContent p,
+    #workContent p {
+      opacity: 0.2;
+      transition: opacity 0.8s ease;
+    }
+
+    #aboutContent p.visible,
+    #workContent p.visible {
+      opacity: 1;
+    }
+
+    .sticky-label {
+      position: sticky;
+      top: 60px;
+      align-self: flex-start;
+      padding: 5px;
+      font-size: 1.6vh;
+      width: 30%;
+    }
+
+
+    /* Underline‑wipe animation */
+    a.preview-link {
+      position: relative;
+      color: currentColor;
+      text-decoration: none;
+      z-index: 2000;
+
+    }
+
+    a.preview-link::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: -2px;
+      height: 2px;
+      width: 100%;
+      background: currentColor;
+      transition: width 0.5s ease;
+    }
+
+    a.preview-link:hover::after {
+      width: 0;
+    }
+
+    a.preview-link,
+    #aboutContent p {
+      transition: opacity 0.4s ease;
+    }
+
+    .preview-link.active-blend {
+      mix-blend-mode: difference;
+      opacity: 1;
+      z-index: 3000;
+    }
+
+
+    /* Preview container behaves like a tooltip */
+    #hoverPreview {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 2500;
+      pointer-events: none;
+    }
+
+    #hoverPreview img,
+    #hoverPreview video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: auto;
+      height: auto;
+      max-width: 70vw;
+      max-height: 70vh;
+      object-fit: contain;
+      z-index: 1999;
+      border-radius: 16px;
+      transition: none !important;
+    }
+    
+    #mediaOverlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2500;
+  display: none;
+  pointer-events: none;
+}
+
+#mediaBackdrop {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* 50% black */
+  z-index: 2499;
+  pointer-events: auto;
+}
+
+
+
+
+    /* HAND IMAGE */
+    #handImage {
+      position: absolute;
+      z-index: 10;
+      pointer-events: none;
+      max-width: none;
+    }
+
+    /* COMMON CONTENT */
+    .screenContent {
+      position: absolute;
+      background: #f5f5f5;
+      color: #000;
+      overflow-y: auto;
+      box-sizing: border-box;
+      font-family: Helvetica, Arial, sans-serif;
+      padding: 5.5vh 3vh 3vh 3vh;
+      border-radius: 2.5vh;
+    }
+
+    @media (max-width: 560px) {
+      .screenContent {
+        border-radius: 0px;
+padding: 40px 3vh;
+      }
+    }
+
+    @media (max-height: 450px) {
+      .screenContent {
+        border-radius: 20px;
+padding: 2vw 3vh;
+      }
+    }
+
+    #homeContent {
+      display: flex; /* This will be overridden by JS initially if not the active screen */
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out; /* Visibility transition removed */
+      /* transform transition removed as per plan */
+      transform-style: preserve-3d; /* Keep for 3D effects if any children use it */
+      will-change: opacity, visibility; /* Changed from transform */
+    }
+
+    /* Allow 3D transforms for handImage specifically */
+    #handImage {
+      transition: transform 0.1s ease;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+
+
+    #aboutContent {
+      display: none; /* This will be overridden by JS when this screen is active */
+      background: #222;
+      color: white;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out; /* Visibility transition removed */
+      will-change: opacity, visibility;
+    }
+
+
+    #workContent {
+      display: none; /* This will be overridden by JS when this screen is active */
+      background: #222;
+      color: white;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease-in-out; /* Visibility transition removed */
+      will-change: opacity, visibility;
+    }
+
+    /* HEADER */
+    .headerTop {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    .headerTop-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: fixed;
+      mix-blend-mode: difference;
+      gap: 8px;
+      z-index: 999;
+    }
+
+
+    .headerTop button {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 1.4vh;
+      cursor: pointer;
+    }
+
+    /* BUTTONS */
+    .comic-button {
+      width: 100%;
+      padding: 10px 10px;
+      font-size: 1.85vh;
+      text-align: center;
+      text-decoration: none;
+      color: #000000;
+      background-color: #ffffff;
+      border: 2px solid #000;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    @media (max-width: 560px) {
+      .comic-button {
+        font-size: 22px;
+      }
+
+    }
+
+    .comic-button:hover {
+      background-color: #dadada;
+      color: #000000;
+      border: 2px solid #000000;
+      box-shadow: 5px 5px 0px #000;
+      transform: translateY(-4px);
+
+    }
+
+    .comic-button:active {
+      background-color: #fff;
+      color: #ff5252;
+      border: 2px solid #ff5252;
+      box-shadow: 5px 5px 0px #ff5252;
+      transform: translateY(-4px);
+
+    }
+
+    #refreshButton {
+      position: fixed;
+      bottom: 50px;
+      right: 50px;
+      background: #fff;
+      border: none;
+      height: 40px;
+      font-size: 16px;
+      color: rgb(0, 0, 0);
+      cursor: pointer;
+      box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      z-index: 1200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      text-align: center;
+      padding: 0px 16px;
+      border-radius: 8px;
+    }
+
+    .scroll-label {
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+      gap: 14px;
+      align-content: center;
+      justify-content: flex-end;
+      height: 15px;
+    }
+
+    .scroll-label .line {
+      height: 1em;
+      line-height: 1em;
+      display: block;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    #refreshButton:hover .scroll-label {
+      transform: translateY(1.8em);
+    }
+
+
+    /* Hide on mobile */
+    @media (max-width: 560px) {
+      #refreshButton {
+        display: none;
+      }
+    }
+
+
+    /* Hide on mobile */
+    @media (max-width: 560px) {
+      #refreshButton {
+        display: none;
+      }
+    }
+
+
+
+    /* FOOTER */
+    .footer {
+      margin-top: 3vh;
+      opacity: 1 !important;
+z-index: 9999;
+    position: relative;
+    }
+
+    .footer p {
+      font-size: 1.4vh;
+      opacity: 1 !important;
+    }
+
+    @media (max-width: 560px) {
+      .footer p {
+        font-size: 14px;
+      }
+    }
+
+
+    .footer a {
+      color: inherit;
+      text-decoration: none;
+      opacity: 1 !important;
+font-size: 1.4vh;
+    }
+
+
+@media (max-width: 560px) {
+      .footer a {
+        font-size: 14px;
+      }
+    }
+
+    .emailLink {
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .socialIcons {
+      vertical-align: middle;
+      cursor: pointer;
+      display: flex;
+      gap: 20px;
+    }
+
+    /* MOBILE HIDE HAND */
+    @media (max-width: 560px) {
+      #handImage {
+        display: none;
+      }
+    }
+
+    .buttonRow {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .buttonRow {
+        flex-direction: column;
+      }
+    }
+
+@media (max-height: 850px) {
+      .buttonRow {
+        flex-direction: column;
+      }
+    }
+
+    /* Hide scrollbars across browsers */
+    .screenContent {
+      scrollbar-width: none;
+      /* Firefox */
+      -ms-overflow-style: none;
+      /* Internet Explorer 10+ */
+    }
+
+    .screenContent::-webkit-scrollbar {
+      display: none;
+      /* Safari and Chrome */
+    }
+
+    /* Tooltip for Type 2 Links */
+    #tooltipCard {
+      position: absolute;
+      background: white;
+      color: #333;
+      border-radius: 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 12px 16px;
+      font-family: Helvetica, Arial, sans-serif;
+      line-height: 115%;
+      z-index: 2500;
+      width: auto;
+      min-width: 240px;
+      max-width: 380px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    /* Content inside tooltip */
+    .tooltip-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tooltip-content img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+    }
+
+    .tooltip-content .text-block {
+      flex-grow: 1;
+    }
+
+    .tooltip-content .text-block strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .tooltip-content .text-block span {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .tooltip-time {
+      font-size: 12px;
+      color: #aaa;
+    }
+
+#preloader {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #000; /* Same as body background */
+    z-index: 20000; /* Higher than anything else */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Helvetica, Arial, sans-serif;
+    color: white;
+    font-size: 20px;
+}
