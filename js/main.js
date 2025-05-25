@@ -61,7 +61,7 @@
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const bg = new Image();
-      bg.src = "images/background.png";
+      bg.src = "pics/background.png";
       bg.onload = () => ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
     }
 
@@ -75,17 +75,17 @@
 
     // --- HAND IMAGE OPTIONS ---
 const handOptions = [
-  { home: "images/Human.png", about: "images/Human-white.png" },
-  { home: "images/Alien.png", about: "images/Alien-white.png" },
-  { home: "images/Bones.png", about: "images/Bones-white.png" },
-  { home: "images/Cyberpunk.png", about: "images/Cyberpunk-white.png" },
-  { home: "images/Grandma.png", about: "images/Grandma-white.png" },
-  { home: "images/Robot.png", about: "images/Robot-white.png" },
-  { home: "images/Mockup.png", about: "images/Mockup-white.png" },
-  { home: "images/Pixel.png", about: "images/Pixel-white.png" },
-  { home: "images/Manga.png", about: "images/Manga-white.png" },
-  { home: "images/Illustration.png", about: "images/Illustration-white.png" },
-  { home: "images/Clay.png", about: "images/Clay-white.png" }
+  { home: "pics/Human.png", about: "pics/Human-white.png" },
+  { home: "pics/Alien.png", about: "pics/Alien-white.png" },
+  { home: "pics/Bones.png", about: "pics/Bones-white.png" },
+  { home: "pics/Cyberpunk.png", about: "pics/Cyberpunk-white.png" },
+  { home: "pics/Grandma.png", about: "pics/Grandma-white.png" },
+  { home: "pics/Robot.png", about: "pics/Robot-white.png" },
+  { home: "pics/Mockup.png", about: "pics/Mockup-white.png" },
+  { home: "pics/Pixel.png", about: "pics/Pixel-white.png" },
+  { home: "pics/Manga.png", about: "pics/Manga-white.png" },
+  { home: "pics/Illustration.png", about: "pics/Illustration-white.png" },
+  { home: "pics/Clay.png", about: "pics/Clay-white.png" }
 ];
 const nonMockupOptions = handOptions.filter(h => !h.home.includes("Mockup"));
 
