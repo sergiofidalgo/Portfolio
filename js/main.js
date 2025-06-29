@@ -564,83 +564,119 @@ handImg.src = selectedHand.home;
       hideTooltip();
     });
 
-// --- PRELOADER LOGIC ---
-const HAND_IMAGE_LOAD_TIMEOUT = 500; // ms
-let handImageLoadTimeoutId = null;
+// --- NEW PRELOADER LOGIC ---
+const IMAGE_LOAD_TIMEOUT_DURATION = 500; // ms
+let imageLoadTimeoutId = null;
 
-function showPageContent() {
-    if (handImageLoadTimeoutId) {
-        clearTimeout(handImageLoadTimeoutId);
-        handImageLoadTimeoutId = null;
+function hidePreloaderAndShowContent() {
+    if (imageLoadTimeoutId) {
+        clearTimeout(imageLoadTimeoutId);
+        imageLoadTimeoutId = null;
     }
-    if (preloaderEl) { // Use cached element
+
+    if (preloaderEl) {
         preloaderEl.style.display = 'none';
     }
 
-    if (homeContentEl) { // Use cached element
+    if (homeContentEl) {
         homeContentEl.style.visibility = 'hidden';
         homeContentEl.style.opacity = '0';
         homeContentEl.style.display = 'flex';
-        homeContentEl.offsetHeight;
+        homeContentEl.offsetHeight; // Force reflow
         homeContentEl.style.visibility = 'visible';
         homeContentEl.style.opacity = '1';
     }
     document.body.classList.add('preload-finished');
 }
 
-function handleHandImageLoaded() {
-    if (handImageLoadTimeoutId) { // Loaded before timeout
-        clearTimeout(handImageLoadTimeoutId);
-        handImageLoadTimeoutId = null;
+function managePreloaderForImageLoad(imageElement) {
+    if (!imageElement) return;
+
+    // Clear any existing timeout for this image
+    if (imageLoadTimeoutId) {
+        clearTimeout(imageLoadTimeoutId);
+        imageLoadTimeoutId = null;
     }
-    // If preloader was shown due to timeout, or if it's first visit (where it's shown by default)
-    // it will be hidden by showPageContent.
-    // If it's a subsequent visit and image loaded fast, preloader was never shown.
-    showPageContent();
+
+    // Ensure image is visible or will be once loaded
+    // If we were hiding it before src change, this is where we'd ensure it becomes visible.
+    // For now, we assume it's either already visible or its visibility is handled by CSS.
+    // Consider adding: imageElement.style.visibility = 'hidden'; // if hidden before src change
+
+    const onImageLoad = () => {
+        imageElement.style.visibility = 'visible'; // Ensure it's visible on load
+        hidePreloaderAndShowContent();
+        imageElement.removeEventListener('load', onImageLoad);
+        imageElement.removeEventListener('error', onImageError);
+    };
+
+    const onImageError = () => {
+        console.error("Image failed to load:", imageElement.src);
+        imageElement.style.visibility = 'visible'; // Still show the space or alt text
+        hidePreloaderAndShowContent(); // Hide preloader even on error
+        imageElement.removeEventListener('load', onImageLoad);
+        imageElement.removeEventListener('error', onImageError);
+    };
+
+    imageElement.addEventListener('load', onImageLoad);
+    imageElement.addEventListener('error', onImageError);
+
+    // Set a timeout to show preloader if image loading is slow
+    imageLoadTimeoutId = setTimeout(() => {
+        if (preloaderEl) {
+            // Only show preloader if image hasn't loaded yet (check by event listeners still being there)
+            // This check is implicitly handled because onload/onerror remove themselves and clear the timeout.
+            // If timeout fires, it means load/error hasn't happened.
+            preloaderEl.style.display = 'flex';
+        }
+        imageLoadTimeoutId = null; // Timeout has fired
+    }, IMAGE_LOAD_TIMEOUT_DURATION);
+
+    // If the image is already loaded (e.g. cached and src set again), onload might not fire consistently.
+    // Browsers are weird with this. A common trick is to check .complete
+    // However, attaching listeners before setting src (or re-setting src) is generally more reliable.
+    // For this flow, managePreloaderForImageLoad is called *after* src is set.
+    if (imageElement.complete && imageElement.naturalHeight !== 0 && imageElement.naturalHeight !== undefined) {
+         // Already loaded and valid image. If timeout was set, it might be too late,
+         // but onload should have fired or will fire.
+         // To be safe, if it's already complete, trigger the load actions directly.
+         // This can help if the 'load' event was missed.
+         onImageLoad();
+    }
 }
 
-function handleHandImageError() {
-    console.error("Hand image failed to load.");
-    if (handImageLoadTimeoutId) { // Error before timeout
-        clearTimeout(handImageLoadTimeoutId);
-        handImageLoadTimeoutId = null;
-    }
-    // Hide preloader even if image fails, to not block the site
-    showPageContent();
-}
+// --- PRELOADER INTEGRATION ---
+// This section replaces the old window.onload = showPageContent;
 
-// Attach early event listeners for handImg
-handImg.onload = handleHandImageLoaded;
-handImg.onerror = handleHandImageError;
+// The handImg.src is set above this point in the script.
+// Now, decide how to handle the preloader based on first visit or subsequent visit.
 
-// New Preloader Trigger Logic
 if (!localStorage.getItem('hasVisitedBefore')) {
     // First visit ever
     localStorage.setItem('hasVisitedBefore', 'true');
     if (preloaderEl) {
-        preloaderEl.style.display = 'flex'; // Show preloader
+        preloaderEl.style.display = 'flex'; // Show preloader immediately
     }
-    // For the very first visit, we let all resources load, including the initial hand image.
-    // The `handImg.onload` will eventually call `showPageContent`.
-    // We also keep a general window.onload as a fallback to ensure content shows.
-    window.onload = showPageContent;
+    // For the very first visit, we want to ensure all initial assets are loaded,
+    // so we use window.onload as the primary trigger.
+    // The handImg will also be part of this. managePreloaderForImageLoad is not strictly
+    // needed here as window.onload will cover hiding the preloader.
+    // However, attaching it can provide a slightly faster hide if handImg loads before everything else.
+    managePreloaderForImageLoad(handImg); // Optional: for potentially faster hide on first load
+    window.onload = hidePreloaderAndShowContent; // Main trigger for first load
 } else {
-    // Subsequent visits
+    // Subsequent visits (refreshes, "I'm Feeling Lucky" clicks)
     // Preloader is hidden by default via CSS.
-    // We only show it if handImg takes too long.
-    handImageLoadTimeoutId = setTimeout(() => {
-        if (preloaderEl) {
-            preloaderEl.style.display = 'flex'; // Show preloader if image is slow
-        }
-        handImageLoadTimeoutId = null; // Clear timeout ID after it has run
-    }, HAND_IMAGE_LOAD_TIMEOUT);
+    // handImg.src has already been set by the logic above.
+    // We now manage its loading and potentially show preloader if it's slow.
 
-    // If handImg is already cached and loads super fast, its 'onload' might fire
-    // before this timeout logic is even set. The `handImg.onload = handleHandImageLoaded;`
-    // assignment above handles this. If it has already loaded and fired,
-    // `handleHandImageLoaded` would have called `showPageContent`.
-    // If not, the timeout or the eventual load/error will handle it.
-    // As a final fallback, especially if handImg.src might not be set yet
-    // or other critical resources are slow:
-    window.onload = showPageContent;
+    // Briefly hide handImg to prevent flash of old content if new one loads very fast
+    // This is more relevant if src could change dynamically without page reload, but harmless here.
+    if(handImg) handImg.style.visibility = 'hidden';
+
+    managePreloaderForImageLoad(handImg);
+
+    // Fallback: Ensure content shows even if image events fail for some reason,
+    // though managePreloaderForImageLoad should handle its own errors.
+    window.onload = hidePreloaderAndShowContent;
 }
