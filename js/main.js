@@ -219,268 +219,177 @@ handImg.src = selectedHand.home;
       if (handImg && selectedHand) handImg.src = selectedHand.home;
     }
 
-    // --- LINKS HOVER PREVIEW ---
+    // --- LINKS HOVER PREVIEW (Simplified for Image Sequencing) ---
     (function () {
-    const preview = document.getElementById('hoverPreview');
-    if (!preview) return;
+        const preview = document.getElementById('hoverPreview');
+        if (!preview) return;
 
-    const isMobile = window.innerWidth <= 560;
-    let activeLink = null; // track currently previewing link
-    let cycleTimeout = null;
-    let frameIdx = 0;
-    let sources = [];
+        const isMobile = window.innerWidth <= 560;
+        let activeLink = null;
+        let carouselTimeoutId = null;
+        let currentImageIndex = 0;
+        let loadedImageElements = [];
+        let isCarouselRunning = false;
+        // let allSourcesForCurrentLink = []; // Not strictly needed if only used in startPreview
 
-    function addMediaElement(el) {
-        const rotation = (Math.random() * 14 - 7).toFixed(1);
-        el.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-        el.style.position = 'absolute';
-        el.style.top = '35%';
-        el.style.left = '50%';
-        el.style.zIndex = 1999;
-        preview.appendChild(el);
-    }
-
-    function stackNextMedia() {
-        if (!activeLink) { // Check 1 from instructions
-            clearTimeout(cycleTimeout);
-            return;
-        }
-        if (!sources.length || frameIdx >= sources.length) { // Ensure frameIdx is within bounds
-             if (sources.length > 0) frameIdx = 0; // Loop if sources exist
-             else { // No sources, reset
-                 resetPreview(); 
-                 return;
-             }
-        }
-
-        const source = sources[frameIdx];
-        const ext = source.split('.').pop().toLowerCase();
-        const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-        const isVideo = ['mp4', 'webm', 'ogg'].includes(ext);
-
-        preview.innerHTML = ''; // Check 1 (modified) from instructions: Clear before adding new media
-
-        if (isImage) {
-            const img = new Image();
-            img.src = source;
-            img.onload = () => {
-                if (!activeLink) return;
-                preloadedMedia[source].loaded = true;
-                // If this is the current item to display, and it just loaded, display it.
-                if (sources[frameIdx] === source) {
-                    displayLoadedMedia(source);
-                }
-            };
-            img.onerror = () => {
-                if (!activeLink) return;
-                console.error("Error loading image:", source);
-                preloadedMedia[source].errored = true;
-                // If this is the current item, try to advance.
-                if (sources[frameIdx] === source) {
-                    advanceAndCycle();
-                }
-            };
-        } else if (isVideo) {
-            const video = document.createElement('video');
-            video.src = source;
-            video.muted = true;
-            video.playsInline = true;
-            video.controls = false;
-            preloadedMedia[source] = { element: video, loaded: false, type: 'video' };
-
-            video.oncanplaythrough = () => { // Prefer canplaythrough for better readiness
-                if (!activeLink) return;
-                preloadedMedia[source].loaded = true;
-                // If this is the current item to display, and it just loaded, display it.
-                if (sources[frameIdx] === source) {
-                    displayLoadedMedia(source);
-                }
-            };
-            video.onerror = () => {
-                if (!activeLink) return;
-                console.error("Error loading video:", source);
-                preloadedMedia[source].errored = true;
-                 if (sources[frameIdx] === source) {
-                    advanceAndCycle();
-                }
-            };
-        } else {
-            console.warn("Unknown media type for preloading:", source);
-            preloadedMedia[source] = { loaded: true, errored: true, type: 'unknown' }; // Mark as errored or skip
-             if (sources[frameIdx] === source) {
-                advanceAndCycle();
+        function displayImageInPreview(imageElement) {
+            preview.innerHTML = '';
+            if (imageElement) {
+                const rotation = (Math.random() * 14 - 7).toFixed(1);
+                imageElement.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+                imageElement.style.position = 'absolute';
+                imageElement.style.top = '35%';
+                imageElement.style.left = '50%';
+                imageElement.style.maxWidth = '70vw';
+                imageElement.style.maxHeight = '70vh';
+                imageElement.style.objectFit = 'contain';
+                imageElement.style.borderRadius = '16px';
+                preview.appendChild(imageElement);
             }
         }
-    }
 
-    function displayLoadedMedia(sourceUrl) {
-        if (!activeLink || !preloadedMedia[sourceUrl] || !preloadedMedia[sourceUrl].loaded) {
-            // If link is no longer active, or media not ready, try to advance or wait.
-            // This specific call might need more sophisticated handling if media is still loading.
-            // For now, if it's not the active one, or not loaded, we might just wait for the preloader or advance.
-            if (preloadedMedia[sourceUrl] && !preloadedMedia[sourceUrl].loaded && !preloadedMedia[sourceUrl].errored) {
-                // Still loading, wait for its onload/oncanplaythrough
+        function runCarouselCycle() {
+            if (!isCarouselRunning || currentImageIndex >= loadedImageElements.length) {
+                if (isCarouselRunning) {
+                    resetPreview();
+                }
                 return;
             }
-            // If errored or activeLink changed, advance
-            advanceAndCycle();
-            return;
+
+            displayImageInPreview(loadedImageElements[currentImageIndex]);
+            currentImageIndex++;
+
+            if (isCarouselRunning) {
+                if (currentImageIndex < loadedImageElements.length) { // Check if there are more images
+                    carouselTimeoutId = setTimeout(runCarouselCycle, 800);
+                } else { // No more images
+                    isCarouselRunning = false; // Stop the carousel
+                    // Optionally, you might want to clear the last image after a delay or keep it.
+                    // For now, it just stops, and resetPreview() on mouseleave will clear it.
+                    // If you want it to clear automatically after the last image:
+                    // setTimeout(() => {
+                    //     if (!activeLink) preview.innerHTML = ''; // Clear only if mouse hasn't moved to another link
+                    // }, 800);
+                }
+            }
         }
 
-        preview.innerHTML = ''; // Clear previous media
-        const media = preloadedMedia[sourceUrl];
-        addMediaElement(media.element); // addMediaElement should now handle the preloaded element
+        function startPreview(linkElement) {
+            resetPreview();
 
-        if (media.type === 'image') {
-            cycleTimeout = setTimeout(advanceAndCycle, 800);
-        } else if (media.type === 'video') {
-            media.element.play().catch(e => console.error("Video play error:", e));
-            media.element.onended = advanceAndCycle;
+            activeLink = linkElement;
+            const imageSources = (linkElement.dataset.sources || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean)
+                .filter(src => /\.(jpg|jpeg|png|gif|webp)$/i.test(src));
+
+            if (!imageSources.length) {
+                activeLink = null;
+                return;
+            }
+
+            preview.style.display = 'block';
+            if (!isMobile) {
+                linkElement.classList.add('active-blend');
+                document.querySelectorAll('a.preview-link').forEach(other => {
+                    if (other !== linkElement) {
+                        other.classList.remove('active-blend');
+                        other.style.opacity = '0.1';
+                    }
+                });
+                document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => {
+                    if (!p.contains(linkElement)) p.style.opacity = '0.05';
+                });
+            } else {
+                linkElement.classList.add('active-blend');
+            }
+
+            loadedImageElements = [];
+
+            const imageLoadPromises = imageSources.map(src => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img); // Resolve with the loaded image element
+                    img.onerror = () => {
+                        console.error("Error loading image for carousel:", src);
+                        resolve(null); // Resolve with null on error to not break Promise.all
+                    };
+                    img.src = src;
+                });
+            });
+
+            Promise.all(imageLoadPromises)
+                .then(images => {
+                    loadedImageElements = images.filter(img => img !== null); // Filter out failed loads
+
+                    if (!activeLink || linkElement !== activeLink || loadedImageElements.length === 0) {
+                        if (linkElement === activeLink) resetPreview();
+                        return;
+                    }
+                    isCarouselRunning = true;
+                    currentImageIndex = 0;
+                    runCarouselCycle();
+                });
         }
-    }
 
-    function advanceAndCycle() {
-        if (!activeLink) {
-            clearTimeout(cycleTimeout);
-            return;
+        function resetPreview() {
+            const previouslyActiveLink = activeLink;
+            isCarouselRunning = false;
+            clearTimeout(carouselTimeoutId);
+
+            activeLink = null;
+            currentImageIndex = 0;
+            loadedImageElements = [];
+
+            if (previouslyActiveLink) {
+                previouslyActiveLink.classList.remove('active-blend');
+            }
+
+            document.querySelectorAll('a.preview-link').forEach(other => other.style.opacity = '');
+            document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => p.style.opacity = '');
+
+            preview.innerHTML = '';
+            preview.style.display = 'none';
         }
-        frameIdx = (frameIdx + 1) % sources.length;
-        stackNextMedia(); // This will now attempt to display preloadedMedia[sources[frameIdx]]
-    }
 
-
-    function stackNextMedia() { // This function now tries to display the media at sources[frameIdx]
-        if (!activeLink || !sources.length) {
-            clearTimeout(cycleTimeout);
-            resetPreviewInternals(); // Clear media if link becomes inactive
-            return;
-        }
-
-        const currentSourceUrl = sources[frameIdx];
-        if (preloadedMedia[currentSourceUrl] && preloadedMedia[currentSourceUrl].loaded) {
-            displayLoadedMedia(currentSourceUrl);
-        } else if (preloadedMedia[currentSourceUrl] && preloadedMedia[currentSourceUrl].errored) {
-            // Skip errored media
-            advanceAndCycle();
-        } else {
-            // Media is not yet loaded (or doesn't exist in preloadedMedia), wait for preloader.
-            // The preloader's onload/oncanplay will call displayLoadedMedia if it's the current frame.
-            // Optionally, add a timeout here to prevent getting stuck if preloading fails silently.
-            // For now, we rely on the preloader callbacks.
-        }
-    }
-    
-    let preloadedMedia = {}; // Store for preloaded media elements and their states
-
-    function startPreview(linkElement) {
-        clearTimeout(cycleTimeout);
-        resetPreviewInternals(); // Reset internal states like frameIdx and preloadedMedia
-
-        sources = (linkElement.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
-        if (!sources.length) return;
-
-        activeLink = linkElement;
-        frameIdx = 0; // Reset frame index for the new preview
-
-        // Start preloading all media for this link
-        sources.forEach(sourceUrl => {
-            // Avoid re-preloading if already initiated for this link's session (optional, simple for now)
-            // if (!preloadedMedia[sourceUrl]) { // This check might be too simple if sources can be shared/reused across links
-                preloadMedia(sourceUrl); // preloadMedia now populates preloadedMedia object
-            // }
+        document.querySelectorAll('a.preview-link:not(.no-preview)').forEach(link => {
+            if (isMobile) {
+                link.addEventListener('click', (e) => {
+                    if (activeLink === link) {
+                        resetPreview();
+                        return;
+                    }
+                    e.preventDefault();
+                    if (activeLink && activeLink !== link) {
+                        resetPreview();
+                    }
+                    startPreview(link);
+                });
+            } else {
+                link.addEventListener('mouseenter', () => {
+                     if (activeLink && activeLink !== link) {
+                        resetPreview();
+                    }
+                    startPreview(link);
+                });
+                link.addEventListener('mouseleave', () => {
+                    if (activeLink === link) {
+                        resetPreview();
+                    }
+                });
+            }
         });
 
-        if (!isMobile) {
-            activeLink.classList.add('active-blend');
-            document.querySelectorAll('a.preview-link').forEach(other => {
-                if (other !== activeLink) {
-                    other.classList.remove('active-blend');
-                    other.style.opacity = '0.1';
-                }
-            });
-            document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => {
-                if (!p.contains(activeLink)) p.style.opacity = '0.05';
-            });
-        } else {
-            activeLink.classList.add('active-blend');
-        }
-        
-        preview.style.display = 'block'; // Show preview container
-        stackNextMedia(); // Attempt to display the first media item (will wait if not loaded)
-    }
-
-    function resetPreviewInternals() {
-        preview.innerHTML = ''; // Clear current display
-        // Potentially abort ongoing preloads if desired, but usually not necessary
-        // for (const key in preloadedMedia) {
-        //    if (preloadedMedia[key].element && preloadedMedia[key].element.src) {
-        //        preloadedMedia[key].element.src = ''; // Stop loading
-        //    }
-        // }
-        preloadedMedia = {}; // Clear the cache of preloaded media
-        frameIdx = 0;
-        // activeLink is reset by the caller (resetPreview or startPreview for another link)
-    }
-
-    function resetPreview() {
-        const previouslyActiveLink = activeLink; // Store for potential class removal
-        activeLink = null; // Check 2 from instructions: Set activeLink to null first
-        clearTimeout(cycleTimeout);
-
-        if (previouslyActiveLink) previouslyActiveLink.classList.remove('active-blend');
-        
-        document.querySelectorAll('a.preview-link').forEach(other => other.style.opacity = '');
-        document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => p.style.opacity = ''); // Check 2 from instructions
-        
-        preview.innerHTML = '';
-        preview.style.display = 'none';
-    }
-
-    // Global tap to close logic (outside the active link)
-    if (isMobile) {
-        document.body.addEventListener('click', (e) => {
-            // Check 6 from instructions
-            if (activeLink && !activeLink.contains(e.target) && !preview.contains(e.target)) {
-                resetPreview();
-            }
-        }, true); // capture phase to catch early
-    }
-
-    document.querySelectorAll('a.preview-link:not(.no-preview)').forEach(link => {
+        // Global tap to close for mobile (if needed)
         if (isMobile) {
-            // Check 4 from instructions: Mobile Click Logic
-            link.addEventListener('click', (e) => {
-                if (activeLink === link) { 
-                    resetPreview(); 
-                    // Allow default navigation by not calling e.preventDefault() and returning
-                    return; 
-                }
-
-                e.preventDefault(); 
-
-                if (activeLink && activeLink !== link) { 
-                    resetPreview(); // Reset if a *different* link was active
-                }
-                startPreview(link); // Use link (e.currentTarget)
-            });
-        } else {
-            // Desktop hover behavior
-            link.addEventListener('mouseenter', () => {
-                if (activeLink && activeLink !== link) { // If another link's preview is active, reset it first
+            document.body.addEventListener('click', (e) => {
+                if (activeLink && !activeLink.contains(e.target) && !preview.contains(e.target)) {
                     resetPreview();
                 }
-                startPreview(link);
-            });
-
-            // Check 5 from instructions: Desktop mouseleave logic
-            link.addEventListener('mouseleave', () => {
-                if (activeLink === link) { 
-                    resetPreview();
-                }
-            });
+            }, true);
         }
-    });
-})();
+    })();
 
 
 
