@@ -267,7 +267,7 @@ handImg.src = selectedHand.home;
                 if (!activeLink) return; // Check again in async callback
                 addMediaElement(img);
                 frameIdx = (frameIdx + 1) % sources.length;
-                cycleTimeout = setTimeout(stackNextMedia, 800); // Check 1 (modified) from instructions: Only for images
+                cycleTimeout = setTimeout(stackNextMedia, 100); // Adjusted timeout for smoother image transition
             };
             img.onerror = () => { // Check 1 from instructions
                 if (!activeLink) return;
@@ -333,7 +333,30 @@ handImg.src = selectedHand.home;
         
         preview.innerHTML = ''; // Clear preview before starting
         preview.style.display = 'block';
-        stackNextMedia();
+        // stackNextMedia(); // Don't call immediately, preload first image
+
+        // Preload the first image and then start the carousel
+        if (sources.length > 0) {
+            const firstSource = sources[0];
+            const firstExt = firstSource.split('.').pop().toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(firstExt)) {
+                const firstImg = new Image();
+                firstImg.src = firstSource;
+                firstImg.onload = () => {
+                    if (activeLink === linkElement) { // Ensure the link is still active
+                        stackNextMedia(); // Start carousel after first image is loaded
+                    }
+                };
+                firstImg.onerror = () => {
+                    if (activeLink === linkElement) { // Ensure the link is still active
+                        console.error("Error preloading first image:", firstSource);
+                        stackNextMedia(); // Start carousel even if first image fails to load
+                    }
+                };
+            } else {
+                stackNextMedia(); // If the first item is not an image (e.g., video), start immediately
+            }
+        }
     }
 
     function resetPreview() {
