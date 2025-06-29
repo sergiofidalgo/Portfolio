@@ -267,7 +267,7 @@ handImg.src = selectedHand.home;
                 if (!activeLink) return; // Check again in async callback
                 addMediaElement(img);
                 frameIdx = (frameIdx + 1) % sources.length;
-                cycleTimeout = setTimeout(stackNextMedia, 800); // Check 1 (modified) from instructions: Only for images
+                cycleTimeout = setTimeout(stackNextMedia, 10); // Reduced timeout for faster image transition
             };
             img.onerror = () => { // Check 1 from instructions
                 if (!activeLink) return;
