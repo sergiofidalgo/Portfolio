@@ -276,15 +276,14 @@ handImg.src = selectedHand.home;
 
             if (currentMedia.type === 'image') {
                 currentMediaIndex++;
+                if (currentMediaIndex >= loadedMediaElements.length) {
+                    currentMediaIndex = 0; // Loop
+                }
                 if (isCarouselRunning) {
-                    if (currentMediaIndex < loadedMediaElements.length) {
+                    if (loadedMediaElements.length > 0) { // Ensure there's something to loop to
                         carouselTimeoutId = setTimeout(runCarouselCycle, 800);
                     } else {
-                        isCarouselRunning = false;
-                        // Optional: Clear last image after 800ms
-                        // carouselTimeoutId = setTimeout(() => {
-                        //     if (!activeLink) resetPreview(); // Or just preview.innerHTML = ''
-                        // }, 800);
+                        isCarouselRunning = false; // No items to display/loop
                     }
                 }
             } else if (currentMedia.type === 'video') {
@@ -293,23 +292,32 @@ handImg.src = selectedHand.home;
                 videoElement.playsInline = true;
 
                 currentVideoOnEndedHandler = () => {
-                    // Make sure to remove this specific listener after it fires or if carousel is reset
                     videoElement.removeEventListener('ended', currentVideoOnEndedHandler);
                     currentVideoOnEndedHandler = null;
                     currentMediaIndex++;
-                    if (isCarouselRunning) { // Check if still running before proceeding
-                        runCarouselCycle();
+                    if (currentMediaIndex >= loadedMediaElements.length) {
+                        currentMediaIndex = 0; // Loop
+                    }
+                    if (isCarouselRunning) {
+                         if (loadedMediaElements.length > 0) {
+                            runCarouselCycle();
+                        } else {
+                            isCarouselRunning = false;
+                        }
                     }
                 };
                 videoElement.addEventListener('ended', currentVideoOnEndedHandler);
 
                 videoElement.play().catch(e => {
                     console.error("Video play error:", e);
-                    // If video fails to play, remove listener and advance
                     videoElement.removeEventListener('ended', currentVideoOnEndedHandler);
                     currentVideoOnEndedHandler = null;
                     currentMediaIndex++;
-                    if(isCarouselRunning) runCarouselCycle(); // Try next media
+                    if (currentMediaIndex >= loadedMediaElements.length) {
+                        currentMediaIndex = 0; // Loop
+                    }
+                    if(isCarouselRunning && loadedMediaElements.length > 0) runCarouselCycle();
+                    else if (isCarouselRunning) isCarouselRunning = false;
                 });
             }
         }
