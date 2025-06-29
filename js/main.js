@@ -227,50 +227,90 @@ handImg.src = selectedHand.home;
         const isMobile = window.innerWidth <= 560;
         let activeLink = null;
         let carouselTimeoutId = null;
-        let currentImageIndex = 0;
-        let loadedImageElements = [];
+        let currentMediaIndex = 0; // Renamed from currentImageIndex
+        let loadedMediaElements = []; // Will store objects like { type: 'image'/'video', element: loadedElement }
         let isCarouselRunning = false;
-        // let allSourcesForCurrentLink = []; // Not strictly needed if only used in startPreview
 
-        function displayImageInPreview(imageElement) {
+        // Stores the current video's onended handler so it can be removed.
+        let currentVideoOnEndedHandler = null;
+
+
+        function displayMediaInPreview(mediaObject) {
             preview.innerHTML = '';
-            if (imageElement) {
+            if (mediaObject && mediaObject.element) {
+                const element = mediaObject.element;
                 const rotation = (Math.random() * 14 - 7).toFixed(1);
-                imageElement.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-                imageElement.style.position = 'absolute';
-                imageElement.style.top = '35%';
-                imageElement.style.left = '50%';
-                imageElement.style.maxWidth = '70vw';
-                imageElement.style.maxHeight = '70vh';
-                imageElement.style.objectFit = 'contain';
-                imageElement.style.borderRadius = '16px';
-                preview.appendChild(imageElement);
+                element.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+                element.style.position = 'absolute';
+                element.style.top = '35%';
+                element.style.left = '50%';
+                element.style.maxWidth = '70vw';
+                element.style.maxHeight = '70vh';
+                element.style.objectFit = 'contain';
+                element.style.borderRadius = '16px';
+                preview.appendChild(element);
             }
         }
 
         function runCarouselCycle() {
-            if (!isCarouselRunning || currentImageIndex >= loadedImageElements.length) {
+            if (!isCarouselRunning || currentMediaIndex >= loadedMediaElements.length) {
                 if (isCarouselRunning) {
                     resetPreview();
                 }
                 return;
             }
 
-            displayImageInPreview(loadedImageElements[currentImageIndex]);
-            currentImageIndex++;
+            // Clear any existing image timer before processing next media
+            clearTimeout(carouselTimeoutId);
+            carouselTimeoutId = null;
 
-            if (isCarouselRunning) {
-                if (currentImageIndex < loadedImageElements.length) { // Check if there are more images
-                    carouselTimeoutId = setTimeout(runCarouselCycle, 800);
-                } else { // No more images
-                    isCarouselRunning = false; // Stop the carousel
-                    // Optionally, you might want to clear the last image after a delay or keep it.
-                    // For now, it just stops, and resetPreview() on mouseleave will clear it.
-                    // If you want it to clear automatically after the last image:
-                    // setTimeout(() => {
-                    //     if (!activeLink) preview.innerHTML = ''; // Clear only if mouse hasn't moved to another link
-                    // }, 800);
+            // Remove previous video's onended listener if it exists
+            if (currentVideoOnEndedHandler && loadedMediaElements[currentMediaIndex-1] && loadedMediaElements[currentMediaIndex-1].type === 'video') {
+                 const previousVideoElement = loadedMediaElements[currentMediaIndex-1].element;
+                 if(previousVideoElement) previousVideoElement.removeEventListener('ended', currentVideoOnEndedHandler);
+                 currentVideoOnEndedHandler = null;
+            }
+
+            const currentMedia = loadedMediaElements[currentMediaIndex];
+            displayMediaInPreview(currentMedia);
+
+            if (currentMedia.type === 'image') {
+                currentMediaIndex++;
+                if (isCarouselRunning) {
+                    if (currentMediaIndex < loadedMediaElements.length) {
+                        carouselTimeoutId = setTimeout(runCarouselCycle, 800);
+                    } else {
+                        isCarouselRunning = false;
+                        // Optional: Clear last image after 800ms
+                        // carouselTimeoutId = setTimeout(() => {
+                        //     if (!activeLink) resetPreview(); // Or just preview.innerHTML = ''
+                        // }, 800);
+                    }
                 }
+            } else if (currentMedia.type === 'video') {
+                const videoElement = currentMedia.element;
+                videoElement.muted = true;
+                videoElement.playsInline = true;
+
+                currentVideoOnEndedHandler = () => {
+                    // Make sure to remove this specific listener after it fires or if carousel is reset
+                    videoElement.removeEventListener('ended', currentVideoOnEndedHandler);
+                    currentVideoOnEndedHandler = null;
+                    currentMediaIndex++;
+                    if (isCarouselRunning) { // Check if still running before proceeding
+                        runCarouselCycle();
+                    }
+                };
+                videoElement.addEventListener('ended', currentVideoOnEndedHandler);
+
+                videoElement.play().catch(e => {
+                    console.error("Video play error:", e);
+                    // If video fails to play, remove listener and advance
+                    videoElement.removeEventListener('ended', currentVideoOnEndedHandler);
+                    currentVideoOnEndedHandler = null;
+                    currentMediaIndex++;
+                    if(isCarouselRunning) runCarouselCycle(); // Try next media
+                });
             }
         }
 
@@ -278,13 +318,9 @@ handImg.src = selectedHand.home;
             resetPreview();
 
             activeLink = linkElement;
-            const imageSources = (linkElement.dataset.sources || '')
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean)
-                .filter(src => /\.(jpg|jpeg|png|gif|webp)$/i.test(src));
+            const mediaSourcesRaw = (linkElement.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
 
-            if (!imageSources.length) {
+            if (!mediaSourcesRaw.length) {
                 activeLink = null;
                 return;
             }
@@ -305,30 +341,44 @@ handImg.src = selectedHand.home;
                 linkElement.classList.add('active-blend');
             }
 
-            loadedImageElements = [];
-
-            const imageLoadPromises = imageSources.map(src => {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    img.onload = () => resolve(img); // Resolve with the loaded image element
-                    img.onerror = () => {
-                        console.error("Error loading image for carousel:", src);
-                        resolve(null); // Resolve with null on error to not break Promise.all
-                    };
-                    img.src = src;
+            loadedMediaElements = [];
+            const mediaLoadPromises = mediaSourcesRaw.map(src => {
+                return new Promise((resolve) => {
+                    const extension = src.split('.').pop().toLowerCase();
+                    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
+                        const img = new Image();
+                        img.onload = () => resolve({ type: 'image', element: img, src: src });
+                        img.onerror = () => {
+                            console.error("Error loading image:", src);
+                            resolve(null);
+                        };
+                        img.src = src;
+                    } else if (['mp4', 'webm', 'ogg'].includes(extension)) {
+                        const video = document.createElement('video');
+                        video.oncanplaythrough = () => resolve({ type: 'video', element: video, src: src });
+                        video.onerror = () => {
+                            console.error("Error loading video:", src);
+                            resolve(null);
+                        };
+                        video.src = src;
+                        video.load(); // Important to initiate loading for videos
+                    } else {
+                        console.warn("Unsupported media type:", src);
+                        resolve(null); // Unsupported type
+                    }
                 });
             });
 
-            Promise.all(imageLoadPromises)
-                .then(images => {
-                    loadedImageElements = images.filter(img => img !== null); // Filter out failed loads
+            Promise.all(mediaLoadPromises)
+                .then(results => {
+                    loadedMediaElements = results.filter(item => item !== null);
 
-                    if (!activeLink || linkElement !== activeLink || loadedImageElements.length === 0) {
+                    if (!activeLink || linkElement !== activeLink || loadedMediaElements.length === 0) {
                         if (linkElement === activeLink) resetPreview();
                         return;
                     }
                     isCarouselRunning = true;
-                    currentImageIndex = 0;
+                    currentMediaIndex = 0;
                     runCarouselCycle();
                 });
         }
@@ -337,10 +387,21 @@ handImg.src = selectedHand.home;
             const previouslyActiveLink = activeLink;
             isCarouselRunning = false;
             clearTimeout(carouselTimeoutId);
+            carouselTimeoutId = null;
+
+            // If there was a video playing, pause it and remove its specific onended listener
+            if (currentVideoOnEndedHandler && loadedMediaElements[currentMediaIndex-1] && loadedMediaElements[currentMediaIndex-1].type === 'video') {
+                 const previousVideoElement = loadedMediaElements[currentMediaIndex-1].element;
+                 if (previousVideoElement) {
+                    previousVideoElement.pause();
+                    previousVideoElement.removeEventListener('ended', currentVideoOnEndedHandler);
+                 }
+            }
+            currentVideoOnEndedHandler = null;
 
             activeLink = null;
-            currentImageIndex = 0;
-            loadedImageElements = [];
+            currentMediaIndex = 0;
+            loadedMediaElements = [];
 
             if (previouslyActiveLink) {
                 previouslyActiveLink.classList.remove('active-blend');
