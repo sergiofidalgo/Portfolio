@@ -565,33 +565,82 @@ handImg.src = selectedHand.home;
     });
 
 // --- PRELOADER LOGIC ---
+const HAND_IMAGE_LOAD_TIMEOUT = 500; // ms
+let handImageLoadTimeoutId = null;
+
 function showPageContent() {
+    if (handImageLoadTimeoutId) {
+        clearTimeout(handImageLoadTimeoutId);
+        handImageLoadTimeoutId = null;
+    }
     if (preloaderEl) { // Use cached element
         preloaderEl.style.display = 'none';
     }
 
     if (homeContentEl) { // Use cached element
-        // Apply the 6-step pattern for showing homeContentEl
-        homeContentEl.style.visibility = 'hidden'; // 1. Start hidden (explicitly, though CSS also does this)
-        homeContentEl.style.opacity = '0';         // 2. Start transparent (explicitly, though CSS also does this)
-        homeContentEl.style.display = 'flex';      // 3. Ensure it's part of layout (CSS should have this, but confirming is safe)
-        homeContentEl.offsetHeight;                // 4. Force reflow
-        homeContentEl.style.visibility = 'visible';// 5. Make it visible
-        homeContentEl.style.opacity = '1';         // 6. Trigger fade-in (CSS transition handles this)
+        homeContentEl.style.visibility = 'hidden';
+        homeContentEl.style.opacity = '0';
+        homeContentEl.style.display = 'flex';
+        homeContentEl.offsetHeight;
+        homeContentEl.style.visibility = 'visible';
+        homeContentEl.style.opacity = '1';
     }
-    
-    // Potentially show other content sections if one of them was the active one,
-    // but for now, the FOUC fix is primarily for the initial load of homeContent.
-    // If aboutContent or workContent were the entry point, they'd need similar treatment.
-    // For example, if 'aboutContent' was meant to be visible:
-    // const aboutContent = aboutContentEl; // Use cached element
-    // if (aboutContent && aboutContent.style.display === 'block') { // Or however its visibility is determined
-    //     aboutContent.style.opacity = '1';
-    //     aboutContent.style.visibility = 'visible';
-    // }
-
     document.body.classList.add('preload-finished');
 }
 
-// Refined Preloader Trigger: Call showPageContent when all resources are loaded
-window.onload = showPageContent;
+function handleHandImageLoaded() {
+    if (handImageLoadTimeoutId) { // Loaded before timeout
+        clearTimeout(handImageLoadTimeoutId);
+        handImageLoadTimeoutId = null;
+    }
+    // If preloader was shown due to timeout, or if it's first visit (where it's shown by default)
+    // it will be hidden by showPageContent.
+    // If it's a subsequent visit and image loaded fast, preloader was never shown.
+    showPageContent();
+}
+
+function handleHandImageError() {
+    console.error("Hand image failed to load.");
+    if (handImageLoadTimeoutId) { // Error before timeout
+        clearTimeout(handImageLoadTimeoutId);
+        handImageLoadTimeoutId = null;
+    }
+    // Hide preloader even if image fails, to not block the site
+    showPageContent();
+}
+
+// Attach early event listeners for handImg
+handImg.onload = handleHandImageLoaded;
+handImg.onerror = handleHandImageError;
+
+// New Preloader Trigger Logic
+if (!localStorage.getItem('hasVisitedBefore')) {
+    // First visit ever
+    localStorage.setItem('hasVisitedBefore', 'true');
+    if (preloaderEl) {
+        preloaderEl.style.display = 'flex'; // Show preloader
+    }
+    // For the very first visit, we let all resources load, including the initial hand image.
+    // The `handImg.onload` will eventually call `showPageContent`.
+    // We also keep a general window.onload as a fallback to ensure content shows.
+    window.onload = showPageContent;
+} else {
+    // Subsequent visits
+    // Preloader is hidden by default via CSS.
+    // We only show it if handImg takes too long.
+    handImageLoadTimeoutId = setTimeout(() => {
+        if (preloaderEl) {
+            preloaderEl.style.display = 'flex'; // Show preloader if image is slow
+        }
+        handImageLoadTimeoutId = null; // Clear timeout ID after it has run
+    }, HAND_IMAGE_LOAD_TIMEOUT);
+
+    // If handImg is already cached and loads super fast, its 'onload' might fire
+    // before this timeout logic is even set. The `handImg.onload = handleHandImageLoaded;`
+    // assignment above handles this. If it has already loaded and fired,
+    // `handleHandImageLoaded` would have called `showPageContent`.
+    // If not, the timeout or the eventual load/error will handle it.
+    // As a final fallback, especially if handImg.src might not be set yet
+    // or other critical resources are slow:
+    window.onload = showPageContent;
+}
