@@ -264,59 +264,133 @@ handImg.src = selectedHand.home;
             const img = new Image();
             img.src = source;
             img.onload = () => {
-                if (!activeLink) return; // Check again in async callback
-                addMediaElement(img);
-                frameIdx = (frameIdx + 1) % sources.length;
-                cycleTimeout = setTimeout(stackNextMedia, 100); // Adjusted timeout for smoother image transition
+                if (!activeLink) return;
+                preloadedMedia[source].loaded = true;
+                // If this is the current item to display, and it just loaded, display it.
+                if (sources[frameIdx] === source) {
+                    displayLoadedMedia(source);
+                }
             };
-            img.onerror = () => { // Check 1 from instructions
+            img.onerror = () => {
                 if (!activeLink) return;
                 console.error("Error loading image:", source);
-                frameIdx = (frameIdx + 1) % sources.length;
-                cycleTimeout = setTimeout(stackNextMedia, 100); 
+                preloadedMedia[source].errored = true;
+                // If this is the current item, try to advance.
+                if (sources[frameIdx] === source) {
+                    advanceAndCycle();
+                }
             };
         } else if (isVideo) {
             const video = document.createElement('video');
             video.src = source;
-            video.autoplay = true;
             video.muted = true;
             video.playsInline = true;
-            video.controls = false; // Keep controls false as per original
+            video.controls = false;
+            preloadedMedia[source] = { element: video, loaded: false, type: 'video' };
 
-            video.oncanplay = () => {
-                if (!activeLink) return; // Check again in async callback
-                addMediaElement(video);
-                video.play();
-            };
-            video.onended = () => {
+            video.oncanplaythrough = () => { // Prefer canplaythrough for better readiness
                 if (!activeLink) return;
-                frameIdx = (frameIdx + 1) % sources.length;
-                stackNextMedia(); // Videos transition on onended
+                preloadedMedia[source].loaded = true;
+                // If this is the current item to display, and it just loaded, display it.
+                if (sources[frameIdx] === source) {
+                    displayLoadedMedia(source);
+                }
             };
-            video.onerror = () => { // Check 1 from instructions
+            video.onerror = () => {
                 if (!activeLink) return;
                 console.error("Error loading video:", source);
-                frameIdx = (frameIdx + 1) % sources.length;
-                cycleTimeout = setTimeout(stackNextMedia, 100);
+                preloadedMedia[source].errored = true;
+                 if (sources[frameIdx] === source) {
+                    advanceAndCycle();
+                }
             };
         } else {
-            // Check 1 from instructions: Handle unknown extensions
-            console.warn("Unknown media type:", source);
-            frameIdx = (frameIdx + 1) % sources.length;
-            cycleTimeout = setTimeout(stackNextMedia, 50);
+            console.warn("Unknown media type for preloading:", source);
+            preloadedMedia[source] = { loaded: true, errored: true, type: 'unknown' }; // Mark as errored or skip
+             if (sources[frameIdx] === source) {
+                advanceAndCycle();
+            }
+        }
+    }
+
+    function displayLoadedMedia(sourceUrl) {
+        if (!activeLink || !preloadedMedia[sourceUrl] || !preloadedMedia[sourceUrl].loaded) {
+            // If link is no longer active, or media not ready, try to advance or wait.
+            // This specific call might need more sophisticated handling if media is still loading.
+            // For now, if it's not the active one, or not loaded, we might just wait for the preloader or advance.
+            if (preloadedMedia[sourceUrl] && !preloadedMedia[sourceUrl].loaded && !preloadedMedia[sourceUrl].errored) {
+                // Still loading, wait for its onload/oncanplaythrough
+                return;
+            }
+            // If errored or activeLink changed, advance
+            advanceAndCycle();
+            return;
+        }
+
+        preview.innerHTML = ''; // Clear previous media
+        const media = preloadedMedia[sourceUrl];
+        addMediaElement(media.element); // addMediaElement should now handle the preloaded element
+
+        if (media.type === 'image') {
+            cycleTimeout = setTimeout(advanceAndCycle, 800);
+        } else if (media.type === 'video') {
+            media.element.play().catch(e => console.error("Video play error:", e));
+            media.element.onended = advanceAndCycle;
+        }
+    }
+
+    function advanceAndCycle() {
+        if (!activeLink) {
+            clearTimeout(cycleTimeout);
+            return;
+        }
+        frameIdx = (frameIdx + 1) % sources.length;
+        stackNextMedia(); // This will now attempt to display preloadedMedia[sources[frameIdx]]
+    }
+
+
+    function stackNextMedia() { // This function now tries to display the media at sources[frameIdx]
+        if (!activeLink || !sources.length) {
+            clearTimeout(cycleTimeout);
+            resetPreviewInternals(); // Clear media if link becomes inactive
+            return;
+        }
+
+        const currentSourceUrl = sources[frameIdx];
+        if (preloadedMedia[currentSourceUrl] && preloadedMedia[currentSourceUrl].loaded) {
+            displayLoadedMedia(currentSourceUrl);
+        } else if (preloadedMedia[currentSourceUrl] && preloadedMedia[currentSourceUrl].errored) {
+            // Skip errored media
+            advanceAndCycle();
+        } else {
+            // Media is not yet loaded (or doesn't exist in preloadedMedia), wait for preloader.
+            // The preloader's onload/oncanplay will call displayLoadedMedia if it's the current frame.
+            // Optionally, add a timeout here to prevent getting stuck if preloading fails silently.
+            // For now, we rely on the preloader callbacks.
         }
     }
     
-    function startPreview(linkElement) { // Check 3 from instructions
-        clearTimeout(cycleTimeout); // Check 3 from instructions
+    let preloadedMedia = {}; // Store for preloaded media elements and their states
+
+    function startPreview(linkElement) {
+        clearTimeout(cycleTimeout);
+        resetPreviewInternals(); // Reset internal states like frameIdx and preloadedMedia
 
         sources = (linkElement.dataset.sources || '').split(',').map(s => s.trim()).filter(Boolean);
         if (!sources.length) return;
 
-        frameIdx = 0;
-        activeLink = linkElement; // Set the new active link
+        activeLink = linkElement;
+        frameIdx = 0; // Reset frame index for the new preview
 
-        if (!isMobile) { // Desktop specific dimming
+        // Start preloading all media for this link
+        sources.forEach(sourceUrl => {
+            // Avoid re-preloading if already initiated for this link's session (optional, simple for now)
+            // if (!preloadedMedia[sourceUrl]) { // This check might be too simple if sources can be shared/reused across links
+                preloadMedia(sourceUrl); // preloadMedia now populates preloadedMedia object
+            // }
+        });
+
+        if (!isMobile) {
             activeLink.classList.add('active-blend');
             document.querySelectorAll('a.preview-link').forEach(other => {
                 if (other !== activeLink) {
@@ -324,39 +398,28 @@ handImg.src = selectedHand.home;
                     other.style.opacity = '0.1';
                 }
             });
-            document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => { // Check 3 from instructions
+            document.querySelectorAll('#aboutContent p, #workContent p').forEach(p => {
                 if (!p.contains(activeLink)) p.style.opacity = '0.05';
             });
-        } else { // Mobile specific highlighting (if any)
-            activeLink.classList.add('active-blend'); // Keep consistent blend mode if used on mobile
+        } else {
+            activeLink.classList.add('active-blend');
         }
         
-        preview.innerHTML = ''; // Clear preview before starting
-        preview.style.display = 'block';
-        // stackNextMedia(); // Don't call immediately, preload first image
+        preview.style.display = 'block'; // Show preview container
+        stackNextMedia(); // Attempt to display the first media item (will wait if not loaded)
+    }
 
-        // Preload the first image and then start the carousel
-        if (sources.length > 0) {
-            const firstSource = sources[0];
-            const firstExt = firstSource.split('.').pop().toLowerCase();
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(firstExt)) {
-                const firstImg = new Image();
-                firstImg.src = firstSource;
-                firstImg.onload = () => {
-                    if (activeLink === linkElement) { // Ensure the link is still active
-                        stackNextMedia(); // Start carousel after first image is loaded
-                    }
-                };
-                firstImg.onerror = () => {
-                    if (activeLink === linkElement) { // Ensure the link is still active
-                        console.error("Error preloading first image:", firstSource);
-                        stackNextMedia(); // Start carousel even if first image fails to load
-                    }
-                };
-            } else {
-                stackNextMedia(); // If the first item is not an image (e.g., video), start immediately
-            }
-        }
+    function resetPreviewInternals() {
+        preview.innerHTML = ''; // Clear current display
+        // Potentially abort ongoing preloads if desired, but usually not necessary
+        // for (const key in preloadedMedia) {
+        //    if (preloadedMedia[key].element && preloadedMedia[key].element.src) {
+        //        preloadedMedia[key].element.src = ''; // Stop loading
+        //    }
+        // }
+        preloadedMedia = {}; // Clear the cache of preloaded media
+        frameIdx = 0;
+        // activeLink is reset by the caller (resetPreview or startPreview for another link)
     }
 
     function resetPreview() {
